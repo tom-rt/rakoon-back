@@ -26,9 +26,6 @@ func initAuthRoutes(r *gin.Engine) {
 
 	r.POST("/subscribe", func(c *gin.Context) {
 		authentication.Subscribe(c)		
-		c.JSON(200, gin.H{
-			"message": "subscribe",
-		})
 	})
 
 }

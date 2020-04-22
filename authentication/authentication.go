@@ -1,7 +1,6 @@
 package authentication
 
 import (
-	"fmt"
 	"math/rand"
 	"net/http"
 	"rakoon/user-service/db"
@@ -26,14 +25,19 @@ func Subscribe(c *gin.Context) {
 	err := c.BindJSON(&subscription)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"Bind json error": err.Error()})
 		return
 	}
 
 	//check if the user exists
 	var user models.User
-	db.DB.First(&user)
-	fmt.Println(user)
+	errors := db.DB.Where("name = ?", subscription.Name).First(&user).GetErrors()
+	if (len(errors) == 0) {
+		c.JSON(409, gin.H{
+			"message": "Conflict: username already taken.",
+		})
+		return
+	}
 
 	// Salt password
 	salt := generateSalt(10)
@@ -47,12 +51,13 @@ func Subscribe(c *gin.Context) {
 	subscription.Salt = salt
 	subscription.LastLogin = time.Now()
 
-	ret := db.DB.NewRecord(subscription)
-	fmt.Println(ret)
-	var reg = db.DB.Create(&subscription)
-	fmt.Printf("%+v\n", reg.Error)
-	ret = db.DB.NewRecord(subscription)
-	fmt.Println(ret)
+	db.DB.NewRecord(subscription)
+	db.DB.Create(&subscription)
+	// ret = db.DB.NewRecord(subscription)
+	c.JSON(200, gin.H{
+		"message": "subscribe",
+	})
+
 }
 
 func hashPassword(password string) (string, error) {

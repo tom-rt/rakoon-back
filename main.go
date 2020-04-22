@@ -14,5 +14,5 @@ func main() {
 	db.InitDb()
 	routes.InitRoutes(r)
 
-	r.Run(":8082")
+	r.Run(":8081")
 }
