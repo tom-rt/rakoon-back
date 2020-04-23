@@ -1,6 +1,7 @@
 package authentication
 
 import (
+	_ "fmt"
 	"math/rand"
 	"net/http"
 	"rakoon/user-service/db"
@@ -14,22 +15,54 @@ import (
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-func login(c *gin.Context) {
+func Connect(c *gin.Context) {
+	var connection models.User
+	err := c.BindJSON(&connection)
 
-}
-
-// Subscribe function
-func Subscribe(c *gin.Context) {
-
-	var subscription models.User
-	err := c.BindJSON(&subscription)
-
+	// Check formatting
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"Bind json error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"Incorrect input data": err.Error()})
 		return
 	}
 
-	//check if the user exists
+	// Fetch the user
+	var user models.User
+	errs := db.DB.Where("name = ?", connection.Name).First(&user).GetErrors()
+
+	if (len(errs) != 0) {
+		c.JSON(404, gin.H{
+			"message": "Incorrect user name or password.",
+		})
+		return
+	}
+
+	check := checkPasswordHash(connection.Password + user.Salt, user.Password)
+
+	if (check == false) {
+		c.JSON(404, gin.H{
+			"message": "Incorrect user name or password.",
+		})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"message": "Connected.",
+	})
+	return
+}
+
+// Subscribe a new user
+func Subscribe(c *gin.Context) {
+	var subscription models.User
+	err := c.BindJSON(&subscription)
+
+	// Check formatting
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"Incorrect input data": err.Error()})
+		return
+	}
+
+	// Check if the user name is already taken
 	var user models.User
 	errors := db.DB.Where("name = ?", subscription.Name).First(&user).GetErrors()
 	if (len(errors) == 0) {
@@ -50,10 +83,10 @@ func Subscribe(c *gin.Context) {
 	subscription.Password = hash
 	subscription.Salt = salt
 	subscription.LastLogin = time.Now()
-
 	db.DB.NewRecord(subscription)
 	db.DB.Create(&subscription)
-	// ret = db.DB.NewRecord(subscription)
+
+	// Subscription success
 	c.JSON(200, gin.H{
 		"message": "subscribe",
 	})

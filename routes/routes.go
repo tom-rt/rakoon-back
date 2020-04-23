@@ -18,10 +18,9 @@ func initUtilsRoutes(r *gin.Engine) {
 }
 
 func initAuthRoutes(r *gin.Engine) {
-	r.POST("/login", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "Connected",
-		})
+
+	r.POST("/connect", func(c *gin.Context) {
+		authentication.Connect(c)
 	})
 
 	r.POST("/subscribe", func(c *gin.Context) {
