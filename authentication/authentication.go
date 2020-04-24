@@ -10,7 +10,7 @@ import (
 
 	"encoding/base64"
 	"encoding/json"
-    "crypto/hmac"
+	"crypto/hmac"
 	"crypto/sha256"
 	"golang.org/x/crypto/bcrypt"
 
@@ -119,13 +119,13 @@ func generateToken(name string) (string) {
 	payload.Name = name
 	jsonPayload, _ := json.Marshal(payload)
 	encPayload := base64.RawURLEncoding.EncodeToString([]byte(string(jsonPayload)))
-	
-	key := []byte(secret)
-    h := hmac.New(sha256.New, key)
-    h.Write([]byte(encHeader + "." + encPayload))
-    signature = base64.RawURLEncoding.EncodeToString(h.Sum(nil))
 
-    token = encHeader + "." + encPayload + "." + signature
+	key := []byte(secret)
+	h := hmac.New(sha256.New, key)
+	h.Write([]byte(encHeader + "." + encPayload))
+	signature = base64.RawURLEncoding.EncodeToString(h.Sum(nil))
+
+	token = encHeader + "." + encPayload + "." + signature
 
 	return token
 }
