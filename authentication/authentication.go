@@ -119,12 +119,10 @@ func generateToken(name string) (string) {
 	payload.Name = name
 	jsonPayload, _ := json.Marshal(payload)
 	encPayload := base64.RawURLEncoding.EncodeToString([]byte(string(jsonPayload)))
-
-	toEncrypt := encHeader + "." + encPayload
 	
 	key := []byte(secret)
     h := hmac.New(sha256.New, key)
-    h.Write([]byte(toEncrypt))
+    h.Write([]byte(encHeader + "." + encPayload))
     signature = base64.RawURLEncoding.EncodeToString(h.Sum(nil))
 
     token = encHeader + "." + encPayload + "." + signature
