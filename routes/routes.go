@@ -1,7 +1,7 @@
 package routes
 
 import "github.com/gin-gonic/gin"
-import "rakoon/user-service/authentication"
+import "rakoon/rakoon-back/authentication"
 
 // InitRoutes calls the routes init
 func InitRoutes(r *gin.Engine) {

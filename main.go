@@ -1,9 +1,9 @@
 package main
 
 import (
-	"rakoon/user-service/db"
-	"rakoon/user-service/middleware"
-	"rakoon/user-service/routes"
+	"rakoon/rakoon-back/db"
+	"rakoon/rakoon-back/middleware"
+	"rakoon/rakoon-back/routes"
 
 	"github.com/gin-gonic/gin"
 )
