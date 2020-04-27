@@ -1,30 +1,25 @@
 package routes
 
-import "github.com/gin-gonic/gin"
-import "rakoon/rakoon-back/authentication"
+import (
+	"rakoon/rakoon-back/authentication"
+	"rakoon/rakoon-back/middleware"
+	"rakoon/rakoon-back/utils"
+
+	"github.com/gin-gonic/gin"
+)
 
 // InitRoutes calls the routes init
 func InitRoutes(r *gin.Engine) {
-	initUtilsRoutes(r)
-	initAuthRoutes(r)
-}
 
-func initUtilsRoutes(r *gin.Engine) {
-	r.GET("/ping", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "pong",
-		})
-	})
-}
+	r.Use(middleware.CorsHandling)
 
-func initAuthRoutes(r *gin.Engine) {
+	// Public routes
+	public := r.Group("/v1")
+	public.POST("/connect", func(c *gin.Context) { authentication.Connect(c) })
+	public.POST("/subscribe", func(c *gin.Context) { authentication.Subscribe(c) })
 
-	r.POST("/connect", func(c *gin.Context) {
-		authentication.Connect(c)
-	})
-
-	r.POST("/subscribe", func(c *gin.Context) {
-		authentication.Subscribe(c)		
-	})
-
+	// Private Routes
+	private := r.Group("/v1")
+	private.Use(middleware.JwtHandling)
+	private.GET("/ping", func(c *gin.Context) { utils.Ping(c) })
 }

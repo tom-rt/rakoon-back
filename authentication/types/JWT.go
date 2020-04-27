@@ -13,4 +13,6 @@ type JwtHeader struct {
 
 type JwtPayload struct {
     Name string `json:"name"`
+    Iat int64 `json:"iat"`
+    Exp int64 `json:"exp"`
 }

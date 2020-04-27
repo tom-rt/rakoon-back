@@ -3,21 +3,20 @@ package authentication
 import (
 	"math/rand"
 	"net/http"
-	"rakoon/rakoon-back/db"
-	"rakoon/rakoon-back/authentication/types"
-	"time"
 	"os"
+	"rakoon/rakoon-back/authentication/types"
+	"rakoon/rakoon-back/db"
+	"time"
 
-	"encoding/base64"
-	"encoding/json"
 	"crypto/hmac"
 	"crypto/sha256"
+	"encoding/base64"
+	"encoding/json"
+
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/gin-gonic/gin"
 )
-
-const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 func Connect(c *gin.Context) {
 	var jwtToken string
@@ -34,16 +33,16 @@ func Connect(c *gin.Context) {
 	var user types.User
 	errs := db.DB.Where("name = ?", connection.Name).First(&user).GetErrors()
 
-	if (len(errs) != 0) {
+	if len(errs) != 0 {
 		c.JSON(404, gin.H{
 			"message": "Incorrect user name or password.",
 		})
 		return
 	}
 
-	check := checkPasswordHash(connection.Password + user.Salt, user.Password)
+	check := checkPasswordHash(connection.Password+user.Salt, user.Password)
 
-	if (check == false) {
+	if check == false {
 		c.JSON(404, gin.H{
 			"message": "Incorrect user name or password.",
 		})
@@ -72,7 +71,7 @@ func Subscribe(c *gin.Context) {
 	// Check if the user name is already taken
 	var user types.User
 	errors := db.DB.Where("name = ?", subscription.Name).First(&user).GetErrors()
-	if (len(errors) == 0) {
+	if len(errors) == 0 {
 		c.JSON(409, gin.H{
 			"message": "Conflict: username already taken.",
 		})
@@ -86,28 +85,31 @@ func Subscribe(c *gin.Context) {
 	// Generate hash
 	hash, _ := hashPassword(saltedPassword)
 
-	// Create the user
+	// Create the user in db
 	subscription.Password = hash
 	subscription.Salt = salt
 	subscription.LastLogin = time.Now()
 	db.DB.NewRecord(subscription)
 	db.DB.Create(&subscription)
 
+	// Generate connection token
+	token := generateToken(subscription.Name)
+
 	// Subscription success
 	c.JSON(200, gin.H{
-		"message": "subscribe",
+		"token": token,
 	})
 
 }
 
-func generateToken(name string) (string) {
+func generateToken(name string) string {
 	var token string
 	var signature string
 	var header *types.JwtHeader
 	var payload *types.JwtPayload
-	var secret = os.Getenv("SECRET_KEY")
 	var alg = "HS256"
 	var typ = "JWT"
+	var now int64
 
 	header = new(types.JwtHeader)
 	header.Alg = alg
@@ -117,17 +119,58 @@ func generateToken(name string) (string) {
 
 	payload = new(types.JwtPayload)
 	payload.Name = name
+	now = NowAsUnixMilli()
+	payload.Iat = now
+	payload.Exp = now + 60000
 	jsonPayload, _ := json.Marshal(payload)
 	encPayload := base64.RawURLEncoding.EncodeToString([]byte(string(jsonPayload)))
 
-	key := []byte(secret)
-	h := hmac.New(sha256.New, key)
-	h.Write([]byte(encHeader + "." + encPayload))
-	signature = base64.RawURLEncoding.EncodeToString(h.Sum(nil))
+	signature = GenerateSignature(encHeader, encPayload)
 
 	token = encHeader + "." + encPayload + "." + signature
 
 	return token
+}
+
+func GenerateSignature(encHeader string, encPayload string) string {
+	var secret = os.Getenv("SECRET_KEY")
+	key := []byte(secret)
+	h := hmac.New(sha256.New, key)
+	h.Write([]byte(encHeader + "." + encPayload))
+	signature := base64.RawURLEncoding.EncodeToString(h.Sum(nil))
+	return signature
+}
+
+func VerifyToken(encHeader string, encPayload string, encSignature string) (bool, string) {
+
+	// Decode payload
+	decPayloadByte, err := base64.RawURLEncoding.DecodeString(encPayload)
+	decPayload := string(decPayloadByte)
+	payload := new(types.JwtPayload)
+	err = json.Unmarshal([]byte(decPayload), payload)
+
+	if err != nil {
+		return false, "Bad token"
+	}
+
+	checkSignature := GenerateSignature(encHeader, encPayload)
+
+	if encSignature != checkSignature {
+		return false, "Bad signature"
+	}
+
+	// Check token validity date
+	now := NowAsUnixMilli()
+
+	if now >= payload.Exp {
+		return false, "Token has expired"
+	}
+
+	return true, "Token valid"
+}
+
+func NowAsUnixMilli() int64 {
+	return time.Now().UnixNano() / 1e6
 }
 
 func hashPassword(password string) (string, error) {
@@ -141,6 +184,7 @@ func checkPasswordHash(password, hash string) bool {
 }
 
 func generateSalt(saltLength int) string {
+	const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	salt := make([]byte, saltLength)
 	for i := range salt {
 		salt[i] = letterBytes[rand.Intn(len(letterBytes))]

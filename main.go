@@ -2,7 +2,6 @@ package main
 
 import (
 	"rakoon/rakoon-back/db"
-	"rakoon/rakoon-back/middleware"
 	"rakoon/rakoon-back/routes"
 
 	"github.com/gin-gonic/gin"
@@ -10,7 +9,7 @@ import (
 
 func main() {
 	r := gin.Default()
-	middleware.InitMiddleware(r)
+	// middleware.InitMiddleware(r)
 	db.InitDb()
 	routes.InitRoutes(r)
 
