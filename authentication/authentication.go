@@ -24,7 +24,7 @@ func Connect(c *gin.Context) {
 	var connection types.User
 	err := c.BindJSON(&connection)
 
-	// Check formatting
+	// Check input formatting
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"Incorrect input data": err.Error()})
 		return
@@ -102,12 +102,12 @@ func Subscribe(c *gin.Context) {
 
 func generateToken(name string) (string) {
 	var token string
+	var signature string
 	var header *types.JwtHeader
 	var payload *types.JwtPayload
-	var signature string
 	var secret = os.Getenv("SECRET_KEY")
-	var alg = os.Getenv("ALG")
-	var typ = os.Getenv("TYP")
+	var alg = "HS256"
+	var typ = "JWT"
 
 	header = new(types.JwtHeader)
 	header.Alg = alg
