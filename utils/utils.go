@@ -9,3 +9,11 @@ func Ping(c *gin.Context) {
 		"message": "pong",
 	})
 }
+
+func MinutesToMilliseconds(min int) int {
+	return min * 60000
+}
+
+func HoursToMilliseconds(hours int) int {
+	return hours * 3600000
+}

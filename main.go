@@ -9,7 +9,6 @@ import (
 
 func main() {
 	r := gin.Default()
-	// middleware.InitMiddleware(r)
 	db.InitDb()
 	routes.InitRoutes(r)
 

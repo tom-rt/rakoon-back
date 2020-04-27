@@ -6,6 +6,7 @@ import (
 	"os"
 	"rakoon/rakoon-back/authentication/types"
 	"rakoon/rakoon-back/db"
+	"rakoon/rakoon-back/utils"
 	"time"
 
 	"crypto/hmac"
@@ -13,9 +14,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 
-	"golang.org/x/crypto/bcrypt"
-
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func Connect(c *gin.Context) {
@@ -41,7 +41,6 @@ func Connect(c *gin.Context) {
 	}
 
 	check := checkPasswordHash(connection.Password+user.Salt, user.Password)
-
 	if check == false {
 		c.JSON(404, gin.H{
 			"message": "Incorrect user name or password.",
@@ -105,11 +104,11 @@ func Subscribe(c *gin.Context) {
 func generateToken(name string) string {
 	var token string
 	var signature string
+	var now int
 	var header *types.JwtHeader
 	var payload *types.JwtPayload
-	var alg = "HS256"
-	var typ = "JWT"
-	var now int64
+	const alg = "HS256"
+	const typ = "JWT"
 
 	header = new(types.JwtHeader)
 	header.Alg = alg
@@ -119,9 +118,9 @@ func generateToken(name string) string {
 
 	payload = new(types.JwtPayload)
 	payload.Name = name
-	now = NowAsUnixMilli()
+	now = nowAsUnixMilli()
 	payload.Iat = now
-	payload.Exp = now + 60000
+	payload.Exp = now + utils.MinutesToMilliseconds(1)
 	jsonPayload, _ := json.Marshal(payload)
 	encPayload := base64.RawURLEncoding.EncodeToString([]byte(string(jsonPayload)))
 
@@ -148,20 +147,17 @@ func VerifyToken(encHeader string, encPayload string, encSignature string) (bool
 	decPayload := string(decPayloadByte)
 	payload := new(types.JwtPayload)
 	err = json.Unmarshal([]byte(decPayload), payload)
-
 	if err != nil {
 		return false, "Bad token"
 	}
 
 	checkSignature := GenerateSignature(encHeader, encPayload)
-
 	if encSignature != checkSignature {
 		return false, "Bad signature"
 	}
 
 	// Check token validity date
-	now := NowAsUnixMilli()
-
+	now := nowAsUnixMilli()
 	if now >= payload.Exp {
 		return false, "Token has expired"
 	}
@@ -169,8 +165,8 @@ func VerifyToken(encHeader string, encPayload string, encSignature string) (bool
 	return true, "Token valid"
 }
 
-func NowAsUnixMilli() int64 {
-	return time.Now().UnixNano() / 1e6
+func nowAsUnixMilli() int {
+	return int(time.Now().UnixNano() / 1e6)
 }
 
 func hashPassword(password string) (string, error) {
