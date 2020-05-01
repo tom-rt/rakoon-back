@@ -1,4 +1,4 @@
-# rakoon back end
+# Rakoon back end
 
 ## Description
 
