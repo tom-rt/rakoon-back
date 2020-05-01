@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-//CorsHandling middleware
+//CorsHandling middleware, allows cross origins
 func CorsHandling(c *gin.Context) {
 
 	cors.New(cors.Config{
@@ -20,7 +20,7 @@ func CorsHandling(c *gin.Context) {
 	})
 }
 
-//JwtHandling middleware
+//JwtHandling middleware, checks if the token is well formatted and has expired
 func JwtHandling(c *gin.Context) {
 
 	// Check a token is present
@@ -50,8 +50,8 @@ func JwtHandling(c *gin.Context) {
 	payload := splittedToken[1]
 	signature := splittedToken[2]
 
+	// Check token authenticity
 	authenticity, message := authentication.VerifyToken(string(header), string(payload), string(signature))
-
 	if authenticity == false {
 		c.JSON(401, gin.H{
 			"message": message,
@@ -59,4 +59,5 @@ func JwtHandling(c *gin.Context) {
 		c.Abort()
 		return
 	}
+
 }

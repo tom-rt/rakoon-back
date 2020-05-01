@@ -7,6 +7,7 @@ import (
 	"rakoon/rakoon-back/authentication/types"
 	"rakoon/rakoon-back/db"
 	"rakoon/rakoon-back/utils"
+	"strings"
 	"time"
 
 	"crypto/hmac"
@@ -19,7 +20,6 @@ import (
 )
 
 func Connect(c *gin.Context) {
-	var jwtToken string
 	var connection types.User
 	err := c.BindJSON(&connection)
 
@@ -29,10 +29,9 @@ func Connect(c *gin.Context) {
 		return
 	}
 
-	// Fetch the user
+	// Fetch the user in db
 	var user types.User
 	errs := db.DB.Where("name = ?", connection.Name).First(&user).GetErrors()
-
 	if len(errs) != 0 {
 		c.JSON(404, gin.H{
 			"message": "Incorrect user name or password.",
@@ -40,6 +39,7 @@ func Connect(c *gin.Context) {
 		return
 	}
 
+	// Check if the provided password is good
 	check := checkPasswordHash(connection.Password+user.Salt, user.Password)
 	if check == false {
 		c.JSON(404, gin.H{
@@ -48,12 +48,40 @@ func Connect(c *gin.Context) {
 		return
 	}
 
-	jwtToken = generateToken(user.Name)
+	// Setting reauth to false
+	setReauth(user.Name, false)
 
+	// Generate and return a token
+	jwtToken := generateToken(user.Name)
 	c.JSON(200, gin.H{
 		"token": jwtToken,
 	})
 	return
+}
+
+func LogOut(c *gin.Context) {
+	var logout types.Logout
+	err := c.BindJSON(&logout)
+
+	// Check input formatting
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"Incorrect input data": err.Error()})
+		return
+	}
+
+	// Check if the user exists
+	if !userExists(logout.Name) {
+		c.JSON(409, gin.H{
+			"message": "User does not exist.",
+		})
+		return
+	}
+
+	// Setting reauth var to true to force the user to reconnect
+	setReauth(logout.Name, true)
+	c.JSON(http.StatusOK, gin.H{
+		"message": "User logged out.",
+	})
 }
 
 // Subscribe a new user
@@ -68,9 +96,7 @@ func Subscribe(c *gin.Context) {
 	}
 
 	// Check if the user name is already taken
-	var user types.User
-	errors := db.DB.Where("name = ?", subscription.Name).First(&user).GetErrors()
-	if len(errors) == 0 {
+	if userExists(subscription.Name) {
 		c.JSON(409, gin.H{
 			"message": "Conflict: username already taken.",
 		})
@@ -87,6 +113,7 @@ func Subscribe(c *gin.Context) {
 	// Create the user in db
 	subscription.Password = hash
 	subscription.Salt = salt
+	subscription.Reauth = false
 	subscription.LastLogin = time.Now()
 	db.DB.NewRecord(subscription)
 	db.DB.Create(&subscription)
@@ -101,32 +128,94 @@ func Subscribe(c *gin.Context) {
 
 }
 
+func RefreshToken(c *gin.Context) {
+	authorization := c.Request.Header["Authorization"][0]
+	token := strings.Split(authorization, "Bearer ")[1]
+	splittedToken := strings.Split(token, ".")
+	if len(splittedToken) != 3 {
+		c.JSON(401, gin.H{
+			"message": "Bad token",
+		})
+		return
+	}
+
+	// Fetching token data
+	encHeader := splittedToken[0]
+	encPayload := splittedToken[1]
+	signature := splittedToken[2]
+
+	// Decode payload
+	decPayloadByte, err := base64.RawURLEncoding.DecodeString(encPayload)
+	decPayload := string(decPayloadByte)
+	payload := new(types.JwtPayload)
+	err = json.Unmarshal([]byte(decPayload), payload)
+	if err != nil {
+		c.JSON(401, gin.H{
+			"message": "Bad token",
+		})
+		return
+	}
+
+	// Check signature
+	encSignature := GenerateSignature(encHeader, encPayload)
+	if encSignature != signature {
+		c.JSON(401, gin.H{
+			"message": "Bad signature",
+		})
+		return
+	}
+
+	// Check expiration duration
+	duration := utils.NowAsUnixMilli() - payload.Iat
+	if duration > utils.HoursToMilliseconds(24) {
+		setReauth(payload.Name, true)
+		c.JSON(401, gin.H{
+			"message": "Token expired more than a week ago, please reconnect.",
+		})
+		return
+	}
+
+	// Check if the user has to re authenticate
+	if GetReauth(payload.Name) {
+		c.JSON(401, gin.H{
+			"message": "Please reconnect.",
+		})
+		return
+	}
+
+	newToken := generateToken(payload.Name)
+	c.JSON(200, gin.H{
+		"message": "Token refreshed.",
+		"token":   newToken,
+	})
+	return
+}
+
 func generateToken(name string) string {
-	var token string
-	var signature string
-	var now int
 	var header *types.JwtHeader
 	var payload *types.JwtPayload
 	const alg = "HS256"
 	const typ = "JWT"
 
+	// Building and encrypting header
 	header = new(types.JwtHeader)
 	header.Alg = alg
 	header.Typ = typ
 	jsonHeader, _ := json.Marshal(header)
 	encHeader := base64.RawURLEncoding.EncodeToString([]byte(string(jsonHeader)))
 
+	// Building and encrypting payload
 	payload = new(types.JwtPayload)
 	payload.Name = name
-	now = nowAsUnixMilli()
+	now := utils.NowAsUnixMilli()
 	payload.Iat = now
-	payload.Exp = now + utils.MinutesToMilliseconds(1)
+	payload.Exp = now + utils.MinutesToMilliseconds(15)
 	jsonPayload, _ := json.Marshal(payload)
 	encPayload := base64.RawURLEncoding.EncodeToString([]byte(string(jsonPayload)))
 
-	signature = GenerateSignature(encHeader, encPayload)
-
-	token = encHeader + "." + encPayload + "." + signature
+	// Building signature and token
+	signature := GenerateSignature(encHeader, encPayload)
+	token := encHeader + "." + encPayload + "." + signature
 
 	return token
 }
@@ -140,8 +229,8 @@ func GenerateSignature(encHeader string, encPayload string) string {
 	return signature
 }
 
+// This function checks if the user has to reconnect and if the token is valid. It is only used in the middleware
 func VerifyToken(encHeader string, encPayload string, encSignature string) (bool, string) {
-
 	// Decode payload
 	decPayloadByte, err := base64.RawURLEncoding.DecodeString(encPayload)
 	decPayload := string(decPayloadByte)
@@ -151,13 +240,18 @@ func VerifyToken(encHeader string, encPayload string, encSignature string) (bool
 		return false, "Bad token"
 	}
 
+	// Check if the user has to reconnect
+	if GetReauth(payload.Name) == true {
+		return false, "Please reconnect."
+	}
+
 	checkSignature := GenerateSignature(encHeader, encPayload)
 	if encSignature != checkSignature {
 		return false, "Bad signature"
 	}
 
 	// Check token validity date
-	now := nowAsUnixMilli()
+	now := utils.NowAsUnixMilli()
 	if now >= payload.Exp {
 		return false, "Token has expired"
 	}
@@ -165,8 +259,28 @@ func VerifyToken(encHeader string, encPayload string, encSignature string) (bool
 	return true, "Token valid"
 }
 
-func nowAsUnixMilli() int {
-	return int(time.Now().UnixNano() / 1e6)
+// Checking in DB if a given username exists
+func userExists(name string) bool {
+	var user types.User
+	errors := db.DB.Where("name = ?", name).First(&user).GetErrors()
+	if len(errors) != 0 {
+		return false
+	}
+	return true
+}
+
+// Setting in db a user's reauth value
+func setReauth(username string, value bool) {
+	var user types.User
+	user.Name = username
+	db.DB.Model(&user).Where("name = ?", username).Update("reauth", value)
+}
+
+// Fetching in db a user's reauth value
+func GetReauth(username string) bool {
+	var user types.User
+	db.DB.Where("name = ?", username).First(&user)
+	return user.Reauth
 }
 
 func hashPassword(password string) (string, error) {
@@ -174,11 +288,13 @@ func hashPassword(password string) (string, error) {
 	return string(bytes), err
 }
 
+// Comparing a salted password and a hash
 func checkPasswordHash(password, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err == nil
 }
 
+// Generate a random string to use as a password salt
 func generateSalt(saltLength int) string {
 	const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	salt := make([]byte, saltLength)

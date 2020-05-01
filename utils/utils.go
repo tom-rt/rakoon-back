@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"time"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -16,4 +18,8 @@ func MinutesToMilliseconds(min int) int {
 
 func HoursToMilliseconds(hours int) int {
 	return hours * 3600000
+}
+
+func NowAsUnixMilli() int {
+	return int(time.Now().UnixNano() / 1e6)
 }
