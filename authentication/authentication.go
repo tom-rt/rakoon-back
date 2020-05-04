@@ -4,8 +4,8 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
-	"rakoon/rakoon-back/authentication/types"
 	"rakoon/rakoon-back/db"
+	"rakoon/rakoon-back/types"
 	"rakoon/rakoon-back/utils"
 	"strings"
 	"time"
@@ -60,7 +60,7 @@ func Connect(c *gin.Context) {
 }
 
 func LogOut(c *gin.Context) {
-	var logout types.Logout
+	var logout types.Username
 	err := c.BindJSON(&logout)
 
 	// Check input formatting

@@ -12,6 +12,13 @@ type User struct {
 	CreatedOn time.Time `gorm:"created_on"`
 }
 
-type Logout struct {
+type Username struct {
 	Name string `gorm:"name" json:"name" binding:"required"`
+}
+
+type UserPublic struct {
+	Name      string    `gorm:"name" json:"name" binding:"required"`
+	Reauth    bool      `gorm:"reauth"`
+	LastLogin time.Time `gorm:"last_login"`
+	CreatedOn time.Time `gorm:"created_on"`
 }

@@ -3,6 +3,8 @@ package routes
 import (
 	"rakoon/rakoon-back/authentication"
 	"rakoon/rakoon-back/middleware"
+
+	"rakoon/rakoon-back/user"
 	"rakoon/rakoon-back/utils"
 
 	"github.com/gin-gonic/gin"
@@ -15,6 +17,7 @@ func InitRoutes(r *gin.Engine) {
 
 	// Public routes
 	public := r.Group("/v1")
+
 	public.POST("/connect", func(c *gin.Context) { authentication.Connect(c) })
 	public.POST("/subscribe", func(c *gin.Context) { authentication.Subscribe(c) })
 	public.POST("/refresh/token", func(c *gin.Context) { authentication.RefreshToken(c) })
@@ -22,6 +25,11 @@ func InitRoutes(r *gin.Engine) {
 	// Private Routes
 	private := r.Group("/v1")
 	private.Use(middleware.JwtHandling)
+
 	private.GET("/ping", func(c *gin.Context) { utils.Ping(c) })
 	private.POST("/logout", func(c *gin.Context) { authentication.LogOut(c) })
+
+	private.GET("/user", func(c *gin.Context) { user.Get(c) })
+	private.PUT("/user", func(c *gin.Context) { user.Update(c) })
+	private.DELETE("/user", func(c *gin.Context) { user.Delete(c) })
 }
