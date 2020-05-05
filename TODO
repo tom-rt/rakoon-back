@@ -1,0 +1,8 @@
+## TODO
+
+Check EOFs in errors
+Switch to sqlx ?
+user route params and objects ids
+create archive route
+check if the secret key is present
+tests
