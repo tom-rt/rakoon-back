@@ -27,7 +27,7 @@ func JwtHandling(c *gin.Context) {
 	_, checkToken := c.Request.Header["Authorization"]
 	if checkToken == false {
 		c.JSON(401, gin.H{
-			"message": "No token found provided",
+			"message": "No token provided",
 		})
 		c.Abort()
 		return
