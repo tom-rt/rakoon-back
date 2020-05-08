@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"rakoon/rakoon-back/authentication"
+	"rakoon/rakoon-back/controllers/authentication"
 	"strings"
 
 	"github.com/gin-contrib/cors"

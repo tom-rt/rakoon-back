@@ -6,7 +6,7 @@ The API for the rakoon project, fully written in Go
 
 The used database engine is postgresql
 
-The libraries used are gin-gonic and GORM
+The libraries used are gin-gonic and SQLX
 
 Made by tom-rt
 

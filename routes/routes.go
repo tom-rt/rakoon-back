@@ -1,11 +1,10 @@
 package routes
 
 import (
-	"rakoon/rakoon-back/authentication"
+	"rakoon/rakoon-back/controllers/authentication"
+	"rakoon/rakoon-back/controllers/user"
+	"rakoon/rakoon-back/controllers/utils"
 	"rakoon/rakoon-back/middleware"
-
-	"rakoon/rakoon-back/user"
-	"rakoon/rakoon-back/utils"
 
 	"github.com/gin-gonic/gin"
 )
