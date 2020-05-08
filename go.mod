@@ -12,6 +12,8 @@ require (
 	github.com/gin-gonic/gin v1.5.0
 	github.com/imdario/mergo v0.3.9 // indirect
 	github.com/jinzhu/gorm v1.9.12
+	github.com/jmoiron/sqlx v1.2.0
+	github.com/lib/pq v1.1.1
 	github.com/mattn/go-colorable v0.1.6 // indirect
 	github.com/mattn/go-shellwords v1.0.10 // indirect
 	github.com/pelletier/go-toml v1.7.0 // indirect

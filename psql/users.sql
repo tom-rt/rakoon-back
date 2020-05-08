@@ -8,5 +8,5 @@ CREATE TABLE users
     salt VARCHAR (50) NOT NULL,
     reauth BOOLEAN NOT NULL,
     created_on TIMESTAMP DEFAULT now(),
-    last_login TIMESTAMP
+    last_login TIMESTAMP DEFAULT now(),
 );

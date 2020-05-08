@@ -1,8 +1,14 @@
+## DOING
+
+Switch to sqlx ?
+
 ## TODO
 
-Check EOFs in errors
-Switch to sqlx ?
+Check EOFs in errors GetErrors()
 user route params and objects ids
 create archive route
 check if the secret key is present
 tests
+set last login on connect
+conttrollers folder
+Rename controlers files

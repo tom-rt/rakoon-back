@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"rakoon/rakoon-back/db"
+	"rakoon/rakoon-back/models"
 	"rakoon/rakoon-back/types"
 	"rakoon/rakoon-back/utils"
 	"strings"
@@ -29,10 +30,20 @@ func Connect(c *gin.Context) {
 		return
 	}
 
-	// Fetch the user in db
-	var user types.User
-	errs := db.DB.Where("name = ?", connection.Name).First(&user).GetErrors()
-	if len(errs) != 0 {
+	// Fetch the user in db GORM
+	// var user types.User
+	// errs := db.DB.Where("name = ?", connection.Name).First(&user).GetErrors()
+	// if len(errs) != 0 {
+	// 	c.JSON(404, gin.H{
+	// 		"message": "Incorrect user name or password.",
+	// 	})
+	// 	return
+	// }
+
+	// Fetch the user in db SQLX
+	var user models.User
+	user, err = models.GetUser(connection.Name)
+	if err != nil {
 		c.JSON(404, gin.H{
 			"message": "Incorrect user name or password.",
 		})
@@ -49,7 +60,7 @@ func Connect(c *gin.Context) {
 	}
 
 	// Setting reauth to false
-	setReauth(user.Name, false)
+	models.SetReauth(user.Name, false)
 
 	// Generate and return a token
 	jwtToken := generateToken(user.Name)
@@ -78,7 +89,7 @@ func LogOut(c *gin.Context) {
 	}
 
 	// Setting reauth var to true to force the user to reconnect
-	setReauth(logout.Name, true)
+	models.SetReauth(logout.Name, true)
 	c.JSON(http.StatusOK, gin.H{
 		"message": "User logged out.",
 	})
@@ -86,7 +97,7 @@ func LogOut(c *gin.Context) {
 
 // Subscribe a new user
 func Subscribe(c *gin.Context) {
-	var subscription types.User
+	var subscription models.User
 	err := c.BindJSON(&subscription)
 
 	// Check formatting
@@ -115,8 +126,9 @@ func Subscribe(c *gin.Context) {
 	subscription.Salt = salt
 	subscription.Reauth = false
 	subscription.LastLogin = time.Now()
-	db.DB.NewRecord(subscription)
-	db.DB.Create(&subscription)
+	// db.DB.NewRecord(subscription)
+	// db.DB.Create(&subscription)
+	models.CreateUser(subscription)
 
 	// Generate connection token
 	token := generateToken(subscription.Name)
@@ -168,7 +180,7 @@ func RefreshToken(c *gin.Context) {
 	// Check expiration duration
 	duration := utils.NowAsUnixMilli() - payload.Iat
 	if duration > utils.HoursToMilliseconds(24) {
-		setReauth(payload.Name, true)
+		models.SetReauth(payload.Name, true)
 		c.JSON(401, gin.H{
 			"message": "Token expired more than a week ago, please reconnect.",
 		})
@@ -261,19 +273,11 @@ func VerifyToken(encHeader string, encPayload string, encSignature string) (bool
 
 // Checking in DB if a given username exists
 func userExists(name string) bool {
-	var user types.User
-	errors := db.DB.Where("name = ?", name).First(&user).GetErrors()
-	if len(errors) != 0 {
+	_, err := models.GetUser(name)
+	if err != nil {
 		return false
 	}
 	return true
-}
-
-// Setting in db a user's reauth value
-func setReauth(username string, value bool) {
-	var user types.User
-	user.Name = username
-	db.DB.Model(&user).Where("name = ?", username).Update("reauth", value)
 }
 
 // Fetching in db a user's reauth value
