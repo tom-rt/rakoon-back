@@ -14,7 +14,6 @@ var DB *sqlx.DB
 //InitDb func
 func InitDb() {
 	var err error
-	var err2 error
 	var dbHost string = os.Getenv("DB_HOST")
 	var dbPort string = os.Getenv("DB_PORT")
 	var dbUser string = os.Getenv("DB_USER")
@@ -22,9 +21,10 @@ func InitDb() {
 
 	//SQLX
 	var dbConnection2 string = fmt.Sprintf("host=%s port=%s user=%s dbname=%s sslmode=disable", dbHost, dbPort, dbUser, dbName)
-	DB, err2 = sqlx.Connect("postgres", dbConnection2)
-	if err2 != nil {
+	DB, err = sqlx.Connect("postgres", dbConnection2)
+	if err != nil {
 		fmt.Println("Error connecting to the database:", err)
+		os.Exit(1)
 	}
 
 }

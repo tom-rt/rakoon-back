@@ -17,8 +17,8 @@ func InitRoutes(r *gin.Engine) {
 	// Public routes
 	public := r.Group("/v1")
 
+	public.POST("/subscribe", func(c *gin.Context) { user.Create(c) })
 	public.POST("/connect", func(c *gin.Context) { authentication.Connect(c) })
-	public.POST("/subscribe", func(c *gin.Context) { authentication.Subscribe(c) })
 	public.POST("/refresh/token", func(c *gin.Context) { authentication.RefreshToken(c) })
 
 	// Private Routes

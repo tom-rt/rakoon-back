@@ -1,27 +1,53 @@
 package user
 
 import (
+	"net/http"
+	"rakoon/rakoon-back/controllers/authentication"
 	"rakoon/rakoon-back/models"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
-// Delete user controller function
-func Delete(c *gin.Context) {
-	var userID = c.Param("id")
+// Create a new user
+func Create(c *gin.Context) {
+	var subscription models.User
+	err := c.BindJSON(&subscription)
 
-	_, err := models.GetUserByID(userID)
+	// Check formatting
 	if err != nil {
-		c.JSON(404, gin.H{
-			"message": "User does not exist",
+		c.JSON(http.StatusBadRequest, gin.H{"Incorrect input data": err.Error()})
+		return
+	}
+
+	// Check if the user name is already taken
+	if authentication.UserNameExists(subscription.Name) {
+		c.JSON(409, gin.H{
+			"message": "Conflict: username already taken.",
 		})
 		return
 	}
 
-	models.DeleteUser(userID)
+	// Salt password
+	salt := authentication.GenerateSalt(10)
+	saltedPassword := subscription.Password + salt
 
+	// Generate hash
+	hash, _ := authentication.HashPassword(saltedPassword)
+
+	// Create the user in db
+	subscription.Password = hash
+	subscription.Salt = salt
+	subscription.Reauth = false
+	subscription.LastLogin = time.Now()
+	models.CreateUser(subscription)
+
+	// Generate connection token
+	token := authentication.GenerateToken(subscription.Name)
+
+	// Subscription success
 	c.JSON(200, gin.H{
-		"message": "User removed",
+		"token": token,
 	})
 
 }
@@ -45,4 +71,24 @@ func Get(c *gin.Context) {
 }
 
 func Update(c *gin.Context) {
+}
+
+// Delete user controller function
+func Delete(c *gin.Context) {
+	var userID = c.Param("id")
+
+	_, err := models.GetUserByID(userID)
+	if err != nil {
+		c.JSON(404, gin.H{
+			"message": "User does not exist",
+		})
+		return
+	}
+
+	models.DeleteUser(userID)
+
+	c.JSON(200, gin.H{
+		"message": "User removed",
+	})
+
 }

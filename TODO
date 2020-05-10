@@ -4,6 +4,8 @@ Finish CRUD user
 
 ## TODO
 
+Update last_login on connect method
+Create middleware for refresh token
 Recheck bad signature
 create archive route
 tests

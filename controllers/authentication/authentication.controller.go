@@ -8,7 +8,6 @@ import (
 	"rakoon/rakoon-back/controllers/utils"
 	"rakoon/rakoon-back/models"
 	"strings"
-	"time"
 
 	"crypto/hmac"
 	"crypto/sha256"
@@ -53,7 +52,7 @@ func Connect(c *gin.Context) {
 	models.SetReauthByName(user.Name, false)
 
 	// Generate and return a token
-	jwtToken := generateToken(user.Name)
+	jwtToken := GenerateToken(user.Name)
 	c.JSON(200, gin.H{
 		"token": jwtToken,
 	})
@@ -84,49 +83,6 @@ func LogOut(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "User logged out.",
 	})
-}
-
-// Subscribe a new user
-func Subscribe(c *gin.Context) {
-	var subscription models.User
-	err := c.BindJSON(&subscription)
-
-	// Check formatting
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"Incorrect input data": err.Error()})
-		return
-	}
-
-	// Check if the user name is already taken
-	if userNameExists(subscription.Name) {
-		c.JSON(409, gin.H{
-			"message": "Conflict: username already taken.",
-		})
-		return
-	}
-
-	// Salt password
-	salt := generateSalt(10)
-	saltedPassword := subscription.Password + salt
-
-	// Generate hash
-	hash, _ := hashPassword(saltedPassword)
-
-	// Create the user in db
-	subscription.Password = hash
-	subscription.Salt = salt
-	subscription.Reauth = false
-	subscription.LastLogin = time.Now()
-	models.CreateUser(subscription)
-
-	// Generate connection token
-	token := generateToken(subscription.Name)
-
-	// Subscription success
-	c.JSON(200, gin.H{
-		"token": token,
-	})
-
 }
 
 // RefreshToken controller function
@@ -192,7 +148,7 @@ func RefreshToken(c *gin.Context) {
 		return
 	}
 
-	newToken := generateToken(payload.Name)
+	newToken := GenerateToken(payload.Name)
 	c.JSON(200, gin.H{
 		"message": "Token refreshed.",
 		"token":   newToken,
@@ -200,7 +156,8 @@ func RefreshToken(c *gin.Context) {
 	return
 }
 
-func generateToken(name string) string {
+// GenerateToken function
+func GenerateToken(name string) string {
 	var header *models.JwtHeader
 	var payload *models.JwtPayload
 	const alg = "HS256"
@@ -273,7 +230,8 @@ func VerifyToken(encHeader string, encPayload string, encSignature string) (bool
 	return true, "Token valid"
 }
 
-func userNameExists(name string) bool {
+// UserNameExists function
+func UserNameExists(name string) bool {
 	_, err := models.GetUserByName(name)
 	fmt.Println(err)
 	if err != nil {
@@ -297,7 +255,8 @@ func GetReauth(username string) (bool, error) {
 	return user.Reauth, err
 }
 
-func hashPassword(password string) (string, error) {
+// HashPassword function
+func HashPassword(password string) (string, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
 	return string(bytes), err
 }
@@ -308,8 +267,8 @@ func checkPasswordHash(password, hash string) bool {
 	return err == nil
 }
 
-// Generate a random string to use as a password salt
-func generateSalt(saltLength int) string {
+// GenerateSalt a random string to use as a password salt
+func GenerateSalt(saltLength int) string {
 	const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	salt := make([]byte, saltLength)
 	for i := range salt {

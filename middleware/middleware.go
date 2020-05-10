@@ -59,5 +59,5 @@ func JwtHandling(c *gin.Context) {
 		c.Abort()
 		return
 	}
-
+	return
 }
