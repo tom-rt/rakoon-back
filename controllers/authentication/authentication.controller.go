@@ -19,6 +19,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// Connect controller function
 func Connect(c *gin.Context) {
 	var connection models.User
 	err := c.BindJSON(&connection)
@@ -31,7 +32,7 @@ func Connect(c *gin.Context) {
 
 	// Fetch the user in db
 	var user models.User
-	user, err = models.GetUser(connection.Name)
+	user, err = models.GetUserByName(connection.Name)
 	if err != nil {
 		c.JSON(404, gin.H{
 			"message": "Incorrect user name or password.",
@@ -49,7 +50,7 @@ func Connect(c *gin.Context) {
 	}
 
 	// Setting reauth to false
-	models.SetReauth(user.Name, false)
+	models.SetReauthByName(user.Name, false)
 
 	// Generate and return a token
 	jwtToken := generateToken(user.Name)
@@ -59,8 +60,9 @@ func Connect(c *gin.Context) {
 	return
 }
 
+// LogOut controller function
 func LogOut(c *gin.Context) {
-	var logout models.Username
+	var logout models.UserID
 	err := c.BindJSON(&logout)
 
 	// Check input formatting
@@ -70,7 +72,7 @@ func LogOut(c *gin.Context) {
 	}
 
 	// Check if the user exists
-	if !userExists(logout.Name) {
+	if !userIDExists(logout.ID) {
 		c.JSON(409, gin.H{
 			"message": "User does not exist.",
 		})
@@ -78,7 +80,7 @@ func LogOut(c *gin.Context) {
 	}
 
 	// Setting reauth var to true to force the user to reconnect
-	models.SetReauth(logout.Name, true)
+	models.SetReauthByID(logout.ID, true)
 	c.JSON(http.StatusOK, gin.H{
 		"message": "User logged out.",
 	})
@@ -96,7 +98,7 @@ func Subscribe(c *gin.Context) {
 	}
 
 	// Check if the user name is already taken
-	if userExists(subscription.Name) {
+	if userNameExists(subscription.Name) {
 		c.JSON(409, gin.H{
 			"message": "Conflict: username already taken.",
 		})
@@ -127,6 +129,7 @@ func Subscribe(c *gin.Context) {
 
 }
 
+// RefreshToken controller function
 func RefreshToken(c *gin.Context) {
 	authorization := c.Request.Header["Authorization"][0]
 	token := strings.Split(authorization, "Bearer ")[1]
@@ -167,7 +170,7 @@ func RefreshToken(c *gin.Context) {
 	// Check expiration duration
 	duration := utils.NowAsUnixMilli() - payload.Iat
 	if duration > utils.HoursToMilliseconds(24) {
-		models.SetReauth(payload.Name, true)
+		models.SetReauthByName(payload.Name, true)
 		c.JSON(401, gin.H{
 			"message": "Token expired more than a week ago, please reconnect.",
 		})
@@ -175,9 +178,16 @@ func RefreshToken(c *gin.Context) {
 	}
 
 	// Check if the user has to re authenticate
-	if GetReauth(payload.Name) {
+	var reauth bool
+	reauth, err = GetReauth(payload.Name)
+	if reauth {
 		c.JSON(401, gin.H{
 			"message": "Please reconnect.",
+		})
+		return
+	} else if err != nil {
+		c.JSON(404, gin.H{
+			"message": "User does not exist.",
 		})
 		return
 	}
@@ -219,6 +229,7 @@ func generateToken(name string) string {
 	return token
 }
 
+// GenerateSignature controller function
 func GenerateSignature(encHeader string, encPayload string) string {
 	var secret = os.Getenv("SECRET_KEY")
 	key := []byte(secret)
@@ -228,7 +239,7 @@ func GenerateSignature(encHeader string, encPayload string) string {
 	return signature
 }
 
-// This function checks if the user has to reconnect and if the token is valid. It is only used in the middleware
+// VerifyToken controller: This function checks if the user has to reconnect and if the token is valid. It is only used in the middleware
 func VerifyToken(encHeader string, encPayload string, encSignature string) (bool, string) {
 	// Decode payload
 	decPayloadByte, err := base64.RawURLEncoding.DecodeString(encPayload)
@@ -240,8 +251,12 @@ func VerifyToken(encHeader string, encPayload string, encSignature string) (bool
 	}
 
 	// Check if the user has to reconnect
-	if GetReauth(payload.Name) == true {
-		return false, "Please reconnect."
+	var reauth bool
+	reauth, err = GetReauth(payload.Name)
+	if reauth {
+		return false, "Please reconnect"
+	} else if err != nil {
+		return false, "User does not exist."
 	}
 
 	checkSignature := GenerateSignature(encHeader, encPayload)
@@ -258,9 +273,8 @@ func VerifyToken(encHeader string, encPayload string, encSignature string) (bool
 	return true, "Token valid"
 }
 
-// Checking in DB if a given username exists
-func userExists(name string) bool {
-	_, err := models.GetUser(name)
+func userNameExists(name string) bool {
+	_, err := models.GetUserByName(name)
 	fmt.Println(err)
 	if err != nil {
 		return false
@@ -268,13 +282,19 @@ func userExists(name string) bool {
 	return true
 }
 
-// Fetching in db a user's reauth value
-func GetReauth(username string) bool {
-	user, err := models.GetUser(username)
+func userIDExists(ID string) bool {
+	_, err := models.GetUserByID(ID)
+	fmt.Println(err)
 	if err != nil {
-		fmt.Println("Error on get reauth, user:", username)
+		return false
 	}
-	return user.Reauth
+	return true
+}
+
+// GetReauth function: fetching in db a user's reauth value
+func GetReauth(username string) (bool, error) {
+	user, err := models.GetUserByName(username)
+	return user.Reauth, err
 }
 
 func hashPassword(password string) (string, error) {

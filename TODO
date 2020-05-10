@@ -1,9 +1,9 @@
 ## DOING
-    Check EOFs in errors GetErrors()
+
+Finish CRUD user
+
 ## TODO
 
-user route params and objects ids
+Recheck bad signature
 create archive route
-check if the secret key is present
 tests
-Finish CRUD user

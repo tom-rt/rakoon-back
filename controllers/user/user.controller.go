@@ -1,26 +1,24 @@
 package user
 
 import (
-	"fmt"
-	"net/http"
 	"rakoon/rakoon-back/models"
 
 	"github.com/gin-gonic/gin"
 )
 
+// Delete user controller function
 func Delete(c *gin.Context) {
-	var data models.Username
-	err := c.BindJSON(&data)
+	var userID = c.Param("id")
 
-	// Check input formatting
+	_, err := models.GetUserByID(userID)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"Incorrect input data": err.Error()})
+		c.JSON(404, gin.H{
+			"message": "User does not exist",
+		})
 		return
 	}
 
-	// Delete the user in db
-	fmt.Println(data.Name)
-	// db.DB.Where("name = ?", data.Name).Delete(&types.User{})
+	models.DeleteUser(userID)
 
 	c.JSON(200, gin.H{
 		"message": "User removed",
@@ -28,21 +26,14 @@ func Delete(c *gin.Context) {
 
 }
 
+// Get user controller function
 func Get(c *gin.Context) {
-	var data models.Username
-	err := c.BindJSON(&data)
+	var userID = c.Param("id")
 
-	// Check input formatting
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"Incorrect input data": err.Error()})
-		return
-	}
-
-	// Check if the user is present in db
-	user, err := models.GetUser(data.Name)
+	user, err := models.GetUserPublicByID(userID)
 	if err != nil {
 		c.JSON(404, gin.H{
-			"message": "Incorrect user name or password.",
+			"message": "Bad user id.",
 		})
 		return
 	}

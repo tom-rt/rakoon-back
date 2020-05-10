@@ -28,7 +28,7 @@ func InitRoutes(r *gin.Engine) {
 	private.GET("/ping", func(c *gin.Context) { utils.Ping(c) })
 	private.POST("/logout", func(c *gin.Context) { authentication.LogOut(c) })
 
-	private.GET("/user", func(c *gin.Context) { user.Get(c) })
+	private.GET("/user/:id", func(c *gin.Context) { user.Get(c) })
 	private.PUT("/user", func(c *gin.Context) { user.Update(c) })
-	private.DELETE("/user", func(c *gin.Context) { user.Delete(c) })
+	private.DELETE("/user/:id", func(c *gin.Context) { user.Delete(c) })
 }
