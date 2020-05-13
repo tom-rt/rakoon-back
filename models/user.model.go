@@ -32,6 +32,12 @@ type UserID struct {
 	ID string `db:"id" json:"id" binding:"required"`
 }
 
+// UserUpdate input for user updated values
+type UserUpdate struct {
+	ID   string `db:"id" json:"id" binding:"required"`
+	Name string `db:"name" json:"name" binding:"required"`
+}
+
 // GetUserByName func
 func GetUserByName(name string) (User, error) {
 	var user User
@@ -76,6 +82,11 @@ func CreateUser(user User) {
 	tx := db.DB.MustBegin()
 	tx.MustExec("INSERT INTO users (name, password, salt, reauth) VALUES ($1, $2, $3, $4)", user.Name, user.Password, user.Salt, user.Reauth)
 	tx.Commit()
+}
+
+// CreateUser function
+func UpdateUser(update UserUpdate) {
+	db.DB.Queryx("UPDATE users SET name = $1 WHERE id = $2", update.Name, update.ID)
 }
 
 // DeleteUser function

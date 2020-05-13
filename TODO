@@ -4,9 +4,12 @@ Finish CRUD user
 
 ## TODO
 
-Remove utils controller
+Change password route
+Remove utils controller ?
+Check url params are present
+params verification with structs ?
 Update last_login on connect method
-Create middleware for refresh token
+Create middleware for refresh token ?
 Recheck bad signature
 create archive route
 tests

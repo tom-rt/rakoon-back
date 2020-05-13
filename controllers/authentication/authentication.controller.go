@@ -71,7 +71,7 @@ func LogOut(c *gin.Context) {
 	}
 
 	// Check if the user exists
-	if !userIDExists(logout.ID) {
+	if !UserIDExists(logout.ID) {
 		c.JSON(409, gin.H{
 			"message": "User does not exist.",
 		})
@@ -240,7 +240,7 @@ func UserNameExists(name string) bool {
 	return true
 }
 
-func userIDExists(ID string) bool {
+func UserIDExists(ID string) bool {
 	_, err := models.GetUserByID(ID)
 	fmt.Println(err)
 	if err != nil {

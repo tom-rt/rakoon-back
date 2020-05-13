@@ -1,7 +1,6 @@
 package user
 
 import (
-	"net/http"
 	"rakoon/rakoon-back/controllers/authentication"
 	"rakoon/rakoon-back/models"
 	"time"
@@ -16,7 +15,7 @@ func Create(c *gin.Context) {
 
 	// Check formatting
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"Incorrect input data": err.Error()})
+		c.JSON(400, gin.H{"Incorrect input data": err.Error()})
 		return
 	}
 
@@ -71,6 +70,30 @@ func Get(c *gin.Context) {
 }
 
 func Update(c *gin.Context) {
+	var update models.UserUpdate
+	var err = c.BindJSON(&update)
+
+	if err != nil {
+		c.JSON(400, gin.H{"Incorrect input data": err.Error()})
+		return
+	}
+
+	if !authentication.UserIDExists(update.ID) {
+		c.JSON(404, gin.H{
+			"message": "Bad user Id.",
+		})
+		return
+	}
+
+	models.UpdateUser(update)
+
+	newToken := authentication.GenerateToken(update.Name)
+	c.JSON(200, gin.H{
+		"message": "User updated",
+		"token":   newToken,
+	})
+	return
+
 }
 
 // Delete user controller function
