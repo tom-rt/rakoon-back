@@ -1,9 +1,8 @@
 ## DOING
 
-Finish CRUD user
-
 ## TODO
 
+replace transactions by queryx
 Change password route
 Remove utils controller ?
 Check url params are present
