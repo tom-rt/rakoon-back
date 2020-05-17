@@ -30,5 +30,7 @@ func InitRoutes(r *gin.Engine) {
 
 	private.GET("/user/:id", func(c *gin.Context) { user.Get(c) })
 	private.PUT("/user", func(c *gin.Context) { user.Update(c) })
+	private.PUT("/user/password", func(c *gin.Context) { user.UpdatePassword(c) })
+	private.PUT("/archive/user", func(c *gin.Context) { user.Archive(c) })
 	private.DELETE("/user/:id", func(c *gin.Context) { user.Delete(c) })
 }

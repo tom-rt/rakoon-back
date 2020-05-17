@@ -3,19 +3,18 @@ package models
 import (
 	"rakoon/rakoon-back/db"
 	"time"
-
-	"github.com/jmoiron/sqlx"
 )
 
 // User object
 type User struct {
-	ID        int       `db:"id" json:"id"`
-	Name      string    `db:"name" json:"name" binding:"required"`
-	Password  string    `db:"password" json:"password" binding:"required"`
-	Salt      string    `db:"salt" json:"salt"`
-	Reauth    bool      `db:"reauth" json:"reauth"`
-	LastLogin time.Time `db:"last_login" json:"last_login"`
-	CreatedOn time.Time `db:"created_on" json:"created_on"`
+	ID         int       `db:"id" json:"id"`
+	Name       string    `db:"name" json:"name" binding:"required"`
+	Password   string    `db:"password" json:"password" binding:"required"`
+	Salt       string    `db:"salt" json:"salt"`
+	Reauth     bool      `db:"reauth" json:"reauth"`
+	CreatedOn  time.Time `db:"created_on" json:"created_on"`
+	LastLogin  time.Time `db:"last_login" json:"last_login"`
+	ArchivedOn time.Time `db:"archived_on" json:"archived_on"`
 }
 
 // UserPublic object
@@ -36,6 +35,12 @@ type UserID struct {
 type UserUpdate struct {
 	ID   string `db:"id" json:"id" binding:"required"`
 	Name string `db:"name" json:"name" binding:"required"`
+}
+
+// UserPassword input for user's password
+type UserPassword struct {
+	ID       string `db:"id" json:"id" binding:"required"`
+	Password string `db:"password" json:"password" binding:"required"`
 }
 
 // GetUserByName func
@@ -65,16 +70,32 @@ func GetUserPublicByID(ID string) (UserPublic, error) {
 	return user, err
 }
 
+// RefreshUserConnection func
+func RefreshUserConnection(userName string, value bool) {
+	tx := db.DB.MustBegin()
+	tx.MustExec("UPDATE users SET reauth = $1, last_login = now() WHERE name = $2", value, userName)
+	tx.Commit()
+}
+
+// UpdateUserPassword func
+func UpdateUserPassword(user UserPassword, salt string) {
+	tx := db.DB.MustBegin()
+	tx.MustExec("UPDATE users SET password = $1, salt = $2, reauth = true WHERE id = $3", user.Password, salt, user.ID)
+	tx.Commit()
+}
+
 // SetReauthByName func
-func SetReauthByName(userName string, value bool) *sqlx.Row {
-	ret := db.DB.QueryRowx("UPDATE users SET reauth = $1 WHERE name = $2", value, userName)
-	return ret
+func SetReauthByName(userName string, value bool) {
+	tx := db.DB.MustBegin()
+	tx.MustExec("UPDATE users SET reauth = $1 WHERE name = $2", value, userName)
+	tx.Commit()
 }
 
 // SetReauthByID func
-func SetReauthByID(ID string, value bool) *sqlx.Row {
-	ret := db.DB.QueryRowx("UPDATE users SET reauth = $1 WHERE id = $2", value, ID)
-	return ret
+func SetReauthByID(ID string, value bool) {
+	tx := db.DB.MustBegin()
+	tx.MustExec("UPDATE users SET reauth = $1 WHERE id = $2", value, ID)
+	tx.Commit()
 }
 
 // CreateUser function
@@ -84,9 +105,18 @@ func CreateUser(user User) {
 	tx.Commit()
 }
 
-// CreateUser function
+// UpdateUser function
 func UpdateUser(update UserUpdate) {
-	db.DB.Queryx("UPDATE users SET name = $1 WHERE id = $2", update.Name, update.ID)
+	tx := db.DB.MustBegin()
+	tx.MustExec("UPDATE users SET name = $1 WHERE id = $2", update.Name, update.ID)
+	tx.Commit()
+}
+
+// ArchiveUser function
+func ArchiveUser(user UserID) {
+	tx := db.DB.MustBegin()
+	tx.MustExec("UPDATE users SET archived_on = now(), reauth = true WHERE id = $1", user.ID)
+	tx.Commit()
 }
 
 // DeleteUser function

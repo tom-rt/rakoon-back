@@ -2,13 +2,6 @@
 
 ## TODO
 
-replace transactions by queryx
-Change password route
 Remove utils controller ?
-Check url params are present
-params verification with structs ?
-Update last_login on connect method
-Create middleware for refresh token ?
-Recheck bad signature
-create archive route
-tests
+end to end tests
+Remove cheeck user exists in middleware ?

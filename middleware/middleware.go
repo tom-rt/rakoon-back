@@ -22,6 +22,7 @@ func CorsHandling(c *gin.Context) {
 
 //JwtHandling middleware, checks if the token is well formatted and has expired
 func JwtHandling(c *gin.Context) {
+	var token string
 
 	// Check a token is present
 	_, checkToken := c.Request.Header["Authorization"]
@@ -35,7 +36,18 @@ func JwtHandling(c *gin.Context) {
 
 	// Check the token is formatted correctly
 	authorization := c.Request.Header["Authorization"][0]
-	token := strings.Split(authorization, "Bearer ")[1]
+	bearer := strings.Split(authorization, "Bearer ")
+
+	if len(bearer) != 2 {
+		c.JSON(401, gin.H{
+			"message": "Bad token",
+		})
+		c.Abort()
+		return
+	} else {
+		token = bearer[1]
+	}
+
 	splittedToken := strings.Split(token, ".")
 	if len(splittedToken) != 3 {
 		c.JSON(401, gin.H{
@@ -59,5 +71,6 @@ func JwtHandling(c *gin.Context) {
 		c.Abort()
 		return
 	}
+
 	return
 }

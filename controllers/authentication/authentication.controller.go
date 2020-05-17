@@ -48,8 +48,8 @@ func Connect(c *gin.Context) {
 		return
 	}
 
-	// Setting reauth to false
-	models.SetReauthByName(user.Name, false)
+	// Setting reauth to false, updated last login field
+	models.RefreshUserConnection(user.Name, false)
 
 	// Generate and return a token
 	jwtToken := GenerateToken(user.Name)
@@ -233,7 +233,6 @@ func VerifyToken(encHeader string, encPayload string, encSignature string) (bool
 // UserNameExists function
 func UserNameExists(name string) bool {
 	_, err := models.GetUserByName(name)
-	fmt.Println(err)
 	if err != nil {
 		return false
 	}
