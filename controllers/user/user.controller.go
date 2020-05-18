@@ -42,7 +42,10 @@ func Create(c *gin.Context) {
 	models.CreateUser(subscription)
 
 	// Generate connection token
-	token := authentication.GenerateToken(subscription.Name)
+	input := new(models.JwtInput)
+	input.Name = subscription.Name
+	input.IsAdmin = nil
+	token := authentication.GenerateToken(input)
 
 	// Subscription success
 	c.JSON(200, gin.H{
@@ -90,7 +93,10 @@ func Update(c *gin.Context) {
 
 	models.UpdateUser(update)
 
-	newToken := authentication.GenerateToken(update.Name)
+	input := new(models.JwtInput)
+	input.Name = update.Name
+	input.IsAdmin = nil
+	newToken := authentication.GenerateToken(input)
 	c.JSON(200, gin.H{
 		"message": "User updated",
 		"token":   newToken,

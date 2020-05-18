@@ -15,6 +15,7 @@ type User struct {
 	CreatedOn  time.Time `db:"created_on" json:"created_on"`
 	LastLogin  time.Time `db:"last_login" json:"last_login"`
 	ArchivedOn time.Time `db:"archived_on" json:"archived_on"`
+	IsAdmin    bool      `db:"is_admin" json:"is_admin"`
 }
 
 // UserPublic object

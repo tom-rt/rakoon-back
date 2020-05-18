@@ -1,5 +1,8 @@
 ## DOING
 
+Fetch is superadmin in generate token ?
+Check if the user in the token matches on updates/deletes ?
+
 ## TODO
 
 Remove utils controller ?

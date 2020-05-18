@@ -16,3 +16,8 @@ type JwtPayload struct {
 	Iat  int    `json:"iat"`
 	Exp  int    `json:"exp"`
 }
+
+type JwtInput struct {
+	Name    string `json:"name"`
+	IsAdmin *bool  `json:"isAdmin"`
+}

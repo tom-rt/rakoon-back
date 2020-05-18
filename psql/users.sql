@@ -9,5 +9,6 @@ CREATE TABLE users
     reauth BOOLEAN NOT NULL,
     created_on TIMESTAMP DEFAULT now(),
     last_login TIMESTAMP DEFAULT now(),
-    archived_on TIMESTAMP DEFAULT NULL
+    archived_on TIMESTAMP DEFAULT NULL,
+    is_admin boolean DEFAULT FALSE NOT NULL
 );

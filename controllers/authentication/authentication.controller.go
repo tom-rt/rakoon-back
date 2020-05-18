@@ -52,7 +52,10 @@ func Connect(c *gin.Context) {
 	models.RefreshUserConnection(user.Name, false)
 
 	// Generate and return a token
-	jwtToken := GenerateToken(user.Name)
+	input := new(models.JwtInput)
+	input.Name = user.Name
+	input.IsAdmin = nil
+	jwtToken := GenerateToken(input)
 	c.JSON(200, gin.H{
 		"token": jwtToken,
 	})
@@ -148,7 +151,10 @@ func RefreshToken(c *gin.Context) {
 		return
 	}
 
-	newToken := GenerateToken(payload.Name)
+	input := new(models.JwtInput)
+	input.Name = payload.Name
+	input.IsAdmin = nil
+	newToken := GenerateToken(input)
 	c.JSON(200, gin.H{
 		"message": "Token refreshed.",
 		"token":   newToken,
@@ -157,7 +163,7 @@ func RefreshToken(c *gin.Context) {
 }
 
 // GenerateToken function
-func GenerateToken(name string) string {
+func GenerateToken(input *models.JwtInput) string {
 	var header *models.JwtHeader
 	var payload *models.JwtPayload
 	const alg = "HS256"
@@ -172,7 +178,7 @@ func GenerateToken(name string) string {
 
 	// Building and encrypting payload
 	payload = new(models.JwtPayload)
-	payload.Name = name
+	payload.Name = input.Name
 	now := utils.NowAsUnixMilli()
 	payload.Iat = now
 	payload.Exp = now + utils.MinutesToMilliseconds(15)
