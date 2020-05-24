@@ -62,15 +62,16 @@ func JwtHandling(c *gin.Context) {
 	payload := splittedToken[1]
 	signature := splittedToken[2]
 
-	// Check token authenticity
-	authenticity, message := authentication.VerifyToken(string(header), string(payload), string(signature))
-	if authenticity == false {
-		c.JSON(401, gin.H{
+	// Check token validity
+	validity, message, status, id := authentication.VerifyToken(string(header), string(payload), string(signature))
+	if validity == false {
+		c.JSON(status, gin.H{
 			"message": message,
 		})
 		c.Abort()
 		return
 	}
 
-	return
+	c.Set("id", id)
+	c.Next()
 }

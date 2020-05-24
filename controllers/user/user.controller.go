@@ -1,8 +1,11 @@
 package user
 
 import (
+	"fmt"
+	"net/http"
 	"rakoon/rakoon-back/controllers/authentication"
 	"rakoon/rakoon-back/models"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -39,13 +42,10 @@ func Create(c *gin.Context) {
 	subscription.Salt = salt
 	subscription.Reauth = false
 	subscription.LastLogin = time.Now()
-	models.CreateUser(subscription)
+	id := models.CreateUser(subscription)
 
 	// Generate connection token
-	input := new(models.JwtInput)
-	input.Name = subscription.Name
-	input.IsAdmin = nil
-	token := authentication.GenerateToken(input)
+	token := authentication.GenerateToken(id)
 
 	// Subscription success
 	c.JSON(200, gin.H{
@@ -57,15 +57,15 @@ func Create(c *gin.Context) {
 
 // Get user controller function
 func Get(c *gin.Context) {
-	var userID = c.Param("id")
+	var ID = c.Param("id")
+	var tokenID = fmt.Sprintf("%v", c.MustGet("id"))
 
-	user, err := models.GetUserPublicByID(userID)
-	if err != nil {
-		c.JSON(404, gin.H{
-			"message": "Bad user id.",
-		})
+	if !matchIDs(c, ID, tokenID) {
 		return
 	}
+
+	// Already checked in jwt verif ?
+	user, _ := models.GetUserPublic(ID)
 
 	c.JSON(200, gin.H{
 		"data": user,
@@ -78,28 +78,21 @@ func Get(c *gin.Context) {
 func Update(c *gin.Context) {
 	var update models.UserUpdate
 	var err = c.BindJSON(&update)
+	var tokenID = fmt.Sprintf("%v", c.MustGet("id"))
 
 	if err != nil {
 		c.JSON(400, gin.H{"Incorrect input data": err.Error()})
 		return
 	}
 
-	if !authentication.UserIDExists(update.ID) {
-		c.JSON(404, gin.H{
-			"message": "Bad user Id.",
-		})
+	if !matchIDs(c, update.ID, tokenID) {
 		return
 	}
 
 	models.UpdateUser(update)
 
-	input := new(models.JwtInput)
-	input.Name = update.Name
-	input.IsAdmin = nil
-	newToken := authentication.GenerateToken(input)
 	c.JSON(200, gin.H{
 		"message": "User updated",
-		"token":   newToken,
 	})
 
 	return
@@ -109,16 +102,14 @@ func Update(c *gin.Context) {
 func UpdatePassword(c *gin.Context) {
 	var user models.UserPassword
 	var err = c.BindJSON(&user)
+	var tokenID = fmt.Sprintf("%v", c.MustGet("id"))
 
 	if err != nil {
 		c.JSON(400, gin.H{"Incorrect input data": err.Error()})
 		return
 	}
 
-	if !authentication.UserIDExists(user.ID) {
-		c.JSON(404, gin.H{
-			"message": "Bad user Id.",
-		})
+	if !matchIDs(c, user.ID, tokenID) {
 		return
 	}
 
@@ -142,17 +133,15 @@ func UpdatePassword(c *gin.Context) {
 // Archive a user (soft delete)
 func Archive(c *gin.Context) {
 	var user models.UserID
-	var err = c.BindJSON(&user)
+	var tokenID = fmt.Sprintf("%v", c.MustGet("id"))
 
+	var err = c.BindJSON(&user)
 	if err != nil {
 		c.JSON(400, gin.H{"Incorrect input data": err.Error()})
 		return
 	}
 
-	if !authentication.UserIDExists(user.ID) {
-		c.JSON(404, gin.H{
-			"message": "Bad user Id.",
-		})
+	if !matchIDs(c, user.ID, tokenID) {
 		return
 	}
 
@@ -167,20 +156,91 @@ func Archive(c *gin.Context) {
 
 // Delete user controller function
 func Delete(c *gin.Context) {
-	var userID = c.Param("id")
+	var tokenID = fmt.Sprintf("%v", c.MustGet("id"))
 
-	_, err := models.GetUserByID(userID)
-	if err != nil {
-		c.JSON(404, gin.H{
-			"message": "User does not exist",
-		})
+	if !matchIDs(c, c.Param("id"), tokenID) {
 		return
 	}
 
-	models.DeleteUser(userID)
+	models.DeleteUser(tokenID)
 
 	c.JSON(200, gin.H{
 		"message": "User removed",
 	})
+	return
+}
 
+// Connect controller function
+func Connect(c *gin.Context) {
+	var connection models.User
+	err := c.BindJSON(&connection)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"Incorrect input data": err.Error()})
+		return
+	}
+
+	// Fetch the user in db
+	var user models.User
+	user, err = models.GetUserByName(connection.Name)
+	if err != nil {
+		c.JSON(404, gin.H{
+			"message": "Incorrect user name or password.",
+		})
+		return
+	}
+
+	// Check if the provided password is good
+	check := authentication.CheckPasswordHash(connection.Password+user.Salt, user.Password)
+	if check == false {
+		c.JSON(404, gin.H{
+			"message": "Incorrect user name or password.",
+		})
+		return
+	}
+
+	// Setting reauth to false, update last login field
+	models.RefreshUserConnection(user.Name, false)
+
+	// Generate and return a token
+	jwtToken := authentication.GenerateToken(user.ID)
+	c.JSON(200, gin.H{
+		"token": jwtToken,
+	})
+	return
+}
+
+// LogOut controller function
+func LogOut(c *gin.Context) {
+	var logOut models.UserID
+	err := c.BindJSON(&logOut)
+	var tokenID = fmt.Sprintf("%v", c.MustGet("id"))
+
+	// Check input formatting
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"Incorrect input data": err.Error()})
+		return
+	}
+
+	if !matchIDs(c, logOut.ID, tokenID) {
+		return
+	}
+
+	// Setting reauth var to true to force the user to reconnect
+	ID, _ := strconv.Atoi(logOut.ID)
+	models.SetReauth(ID, true)
+	c.JSON(http.StatusOK, gin.H{
+		"message": "User logged out.",
+	})
+}
+
+// This function checks if the id present in the token (retrieved by the middleware) matches with the id in the route parameters, or in the route body.
+func matchIDs(c *gin.Context, ID string, tokenID string) bool {
+	if tokenID != ID {
+		c.JSON(400, gin.H{
+			"message": "Wrong id.",
+		})
+		return false
+	}
+	return true
 }

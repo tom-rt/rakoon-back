@@ -1,9 +1,7 @@
 package authentication
 
 import (
-	"fmt"
 	"math/rand"
-	"net/http"
 	"os"
 	"rakoon/rakoon-back/controllers/utils"
 	"rakoon/rakoon-back/models"
@@ -17,76 +15,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 )
-
-// Connect controller function
-func Connect(c *gin.Context) {
-	var connection models.User
-	err := c.BindJSON(&connection)
-
-	// Check input formatting
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"Incorrect input data": err.Error()})
-		return
-	}
-
-	// Fetch the user in db
-	var user models.User
-	user, err = models.GetUserByName(connection.Name)
-	if err != nil {
-		c.JSON(404, gin.H{
-			"message": "Incorrect user name or password.",
-		})
-		return
-	}
-
-	// Check if the provided password is good
-	check := checkPasswordHash(connection.Password+user.Salt, user.Password)
-	if check == false {
-		c.JSON(404, gin.H{
-			"message": "Incorrect user name or password.",
-		})
-		return
-	}
-
-	// Setting reauth to false, updated last login field
-	models.RefreshUserConnection(user.Name, false)
-
-	// Generate and return a token
-	input := new(models.JwtInput)
-	input.Name = user.Name
-	input.IsAdmin = nil
-	jwtToken := GenerateToken(input)
-	c.JSON(200, gin.H{
-		"token": jwtToken,
-	})
-	return
-}
-
-// LogOut controller function
-func LogOut(c *gin.Context) {
-	var logout models.UserID
-	err := c.BindJSON(&logout)
-
-	// Check input formatting
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"Incorrect input data": err.Error()})
-		return
-	}
-
-	// Check if the user exists
-	if !UserIDExists(logout.ID) {
-		c.JSON(409, gin.H{
-			"message": "User does not exist.",
-		})
-		return
-	}
-
-	// Setting reauth var to true to force the user to reconnect
-	models.SetReauthByID(logout.ID, true)
-	c.JSON(http.StatusOK, gin.H{
-		"message": "User logged out.",
-	})
-}
 
 // RefreshToken controller function
 func RefreshToken(c *gin.Context) {
@@ -129,7 +57,7 @@ func RefreshToken(c *gin.Context) {
 	// Check expiration duration
 	duration := utils.NowAsUnixMilli() - payload.Iat
 	if duration > utils.HoursToMilliseconds(24) {
-		models.SetReauthByName(payload.Name, true)
+		models.SetReauth(payload.ID, true)
 		c.JSON(401, gin.H{
 			"message": "Token expired more than a week ago, please reconnect.",
 		})
@@ -138,7 +66,7 @@ func RefreshToken(c *gin.Context) {
 
 	// Check if the user has to re authenticate
 	var reauth bool
-	reauth, err = GetReauth(payload.Name)
+	reauth, err = GetReauth(payload.ID)
 	if reauth {
 		c.JSON(401, gin.H{
 			"message": "Please reconnect.",
@@ -151,10 +79,7 @@ func RefreshToken(c *gin.Context) {
 		return
 	}
 
-	input := new(models.JwtInput)
-	input.Name = payload.Name
-	input.IsAdmin = nil
-	newToken := GenerateToken(input)
+	newToken := GenerateToken(payload.ID)
 	c.JSON(200, gin.H{
 		"message": "Token refreshed.",
 		"token":   newToken,
@@ -163,7 +88,7 @@ func RefreshToken(c *gin.Context) {
 }
 
 // GenerateToken function
-func GenerateToken(input *models.JwtInput) string {
+func GenerateToken(id int) string {
 	var header *models.JwtHeader
 	var payload *models.JwtPayload
 	const alg = "HS256"
@@ -178,7 +103,8 @@ func GenerateToken(input *models.JwtInput) string {
 
 	// Building and encrypting payload
 	payload = new(models.JwtPayload)
-	payload.Name = input.Name
+	payload.ID = id
+	payload.IsAdmin = isAdmin(payload.ID)
 	now := utils.NowAsUnixMilli()
 	payload.Iat = now
 	payload.Exp = now + utils.MinutesToMilliseconds(15)
@@ -203,37 +129,37 @@ func GenerateSignature(encHeader string, encPayload string) string {
 }
 
 // VerifyToken controller: This function checks if the user has to reconnect and if the token is valid. It is only used in the middleware
-func VerifyToken(encHeader string, encPayload string, encSignature string) (bool, string) {
+func VerifyToken(encHeader string, encPayload string, encSignature string) (isValid bool, message string, status int, id int) {
 	// Decode payload
 	decPayloadByte, err := base64.RawURLEncoding.DecodeString(encPayload)
 	decPayload := string(decPayloadByte)
 	payload := new(models.JwtPayload)
 	err = json.Unmarshal([]byte(decPayload), payload)
 	if err != nil {
-		return false, "Bad token"
+		return false, "Bad token", 401, -1
 	}
 
 	// Check if the user has to reconnect
 	var reauth bool
-	reauth, err = GetReauth(payload.Name)
+	reauth, err = GetReauth(payload.ID)
 	if reauth {
-		return false, "Please reconnect"
+		return false, "Please reconnect", 401, -1
 	} else if err != nil {
-		return false, "User does not exist."
+		return false, "User id in token payload does not exist.", 404, -1
 	}
 
 	checkSignature := GenerateSignature(encHeader, encPayload)
 	if encSignature != checkSignature {
-		return false, "Bad signature"
+		return false, "Bad signature", 401, -1
 	}
 
 	// Check token validity date
 	now := utils.NowAsUnixMilli()
 	if now >= payload.Exp {
-		return false, "Token has expired"
+		return false, "Token has expired", 401, -1
 	}
 
-	return true, "Token valid"
+	return true, "Token valid", 200, payload.ID
 }
 
 // UserNameExists function
@@ -245,9 +171,16 @@ func UserNameExists(name string) bool {
 	return true
 }
 
-func UserIDExists(ID string) bool {
+func isAdmin(ID int) bool {
+	ret, err := models.IsAdmin(ID)
+	if err != nil {
+		return false
+	}
+	return ret
+}
+
+func UserIDExists(ID int) bool {
 	_, err := models.GetUserByID(ID)
-	fmt.Println(err)
 	if err != nil {
 		return false
 	}
@@ -255,8 +188,8 @@ func UserIDExists(ID string) bool {
 }
 
 // GetReauth function: fetching in db a user's reauth value
-func GetReauth(username string) (bool, error) {
-	user, err := models.GetUserByName(username)
+func GetReauth(ID int) (bool, error) {
+	user, err := models.GetUserByID(ID)
 	return user.Reauth, err
 }
 
@@ -267,7 +200,7 @@ func HashPassword(password string) (string, error) {
 }
 
 // Comparing a salted password and a hash
-func checkPasswordHash(password, hash string) bool {
+func CheckPasswordHash(password, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err == nil
 }

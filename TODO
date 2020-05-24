@@ -1,10 +1,11 @@
 ## DOING
 
-Fetch is superadmin in generate token ?
-Check if the user in the token matches on updates/deletes ?
-
 ## TODO
 
 Remove utils controller ?
 end to end tests
-Remove cheeck user exists in middleware ?
+Add admin restricted routes ? Non archived restricted routes ?
+
+Forgotten password feature
+Account validation by mail
+Check ReCAPTCHA

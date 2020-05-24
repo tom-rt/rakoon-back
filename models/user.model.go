@@ -53,8 +53,16 @@ func GetUserByName(name string) (User, error) {
 	return user, err
 }
 
+// IsAdmin func
+func IsAdmin(ID int) (bool, error) {
+	var user User
+	err := db.DB.Get(&user,
+		"SELECT is_admin FROM users where id = $1", ID)
+	return user.IsAdmin, err
+}
+
 // GetUserByID func model
-func GetUserByID(ID string) (User, error) {
+func GetUserByID(ID int) (User, error) {
 	var user User
 	err := db.DB.Get(&user,
 		"SELECT id, name, password, salt, reauth, created_on, last_login FROM users where id = $1",
@@ -62,8 +70,8 @@ func GetUserByID(ID string) (User, error) {
 	return user, err
 }
 
-// GetUserPublicByID func model
-func GetUserPublicByID(ID string) (UserPublic, error) {
+// GetUserPublic func model
+func GetUserPublic(ID string) (UserPublic, error) {
 	var user UserPublic
 	err := db.DB.Get(&user,
 		"SELECT id, name, reauth, created_on, last_login FROM users where id = $1",
@@ -85,25 +93,24 @@ func UpdateUserPassword(user UserPassword, salt string) {
 	tx.Commit()
 }
 
-// SetReauthByName func
-func SetReauthByName(userName string, value bool) {
-	tx := db.DB.MustBegin()
-	tx.MustExec("UPDATE users SET reauth = $1 WHERE name = $2", value, userName)
-	tx.Commit()
-}
-
-// SetReauthByID func
-func SetReauthByID(ID string, value bool) {
+// SetReauth func
+func SetReauth(ID int, value bool) {
 	tx := db.DB.MustBegin()
 	tx.MustExec("UPDATE users SET reauth = $1 WHERE id = $2", value, ID)
 	tx.Commit()
 }
 
 // CreateUser function
-func CreateUser(user User) {
+func CreateUser(user User) int {
+	var ret UserPublic
+
 	tx := db.DB.MustBegin()
 	tx.MustExec("INSERT INTO users (name, password, salt, reauth) VALUES ($1, $2, $3, $4)", user.Name, user.Password, user.Salt, user.Reauth)
 	tx.Commit()
+
+	db.DB.Get(&ret, "SELECT id, name, reauth, created_on, last_login FROM users WHERE name = $1", user.Name)
+
+	return ret.ID
 }
 
 // UpdateUser function

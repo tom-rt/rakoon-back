@@ -12,12 +12,8 @@ type JwtHeader struct {
 }
 
 type JwtPayload struct {
-	Name string `json:"name"`
-	Iat  int    `json:"iat"`
-	Exp  int    `json:"exp"`
-}
-
-type JwtInput struct {
-	Name    string `json:"name"`
-	IsAdmin *bool  `json:"isAdmin"`
+	ID      int  `json:"id"`
+	IsAdmin bool `json:"isAdmin"`
+	Iat     int  `json:"iat"`
+	Exp     int  `json:"exp"`
 }

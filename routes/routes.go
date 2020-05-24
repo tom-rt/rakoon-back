@@ -18,16 +18,15 @@ func InitRoutes(r *gin.Engine) {
 	public := r.Group("/v1")
 
 	public.POST("/subscribe", func(c *gin.Context) { user.Create(c) })
-	public.POST("/connect", func(c *gin.Context) { authentication.Connect(c) })
+	public.POST("/connect", func(c *gin.Context) { user.Connect(c) })
 	public.POST("/refresh/token", func(c *gin.Context) { authentication.RefreshToken(c) })
 
 	// Private Routes
 	private := r.Group("/v1")
 	private.Use(middleware.JwtHandling)
 
+	private.POST("/logout", func(c *gin.Context) { user.LogOut(c) })
 	private.GET("/ping", func(c *gin.Context) { utils.Ping(c) })
-	private.POST("/logout", func(c *gin.Context) { authentication.LogOut(c) })
-
 	private.GET("/user/:id", func(c *gin.Context) { user.Get(c) })
 	private.PUT("/user", func(c *gin.Context) { user.Update(c) })
 	private.PUT("/user/password", func(c *gin.Context) { user.UpdatePassword(c) })
