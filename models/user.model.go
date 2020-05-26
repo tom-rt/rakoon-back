@@ -121,9 +121,9 @@ func UpdateUser(update UserUpdate) {
 }
 
 // ArchiveUser function
-func ArchiveUser(user UserID) {
+func ArchiveUser(ID string) {
 	tx := db.DB.MustBegin()
-	tx.MustExec("UPDATE users SET archived_on = now(), reauth = true WHERE id = $1", user.ID)
+	tx.MustExec("UPDATE users SET archived_on = now(), reauth = true WHERE id = $1", ID)
 	tx.Commit()
 }
 

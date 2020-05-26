@@ -1,10 +1,9 @@
 ## DOING
 
+Ids in route parameters for connection ?
+
 ## TODO
 
-Remove utils controller ?
-Ids in route parameters for POST and PUT ?
-Change create user route name
 In matchs Id, check id is alphanumeric, and 404 ?
 end to end tests
 Add admin restricted routes ? Non archived restricted routes ?

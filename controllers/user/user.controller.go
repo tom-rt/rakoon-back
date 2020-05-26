@@ -48,7 +48,7 @@ func Create(c *gin.Context) {
 	token := authentication.GenerateToken(id)
 
 	// Subscription success
-	c.JSON(200, gin.H{
+	c.JSON(201, gin.H{
 		"token": token,
 	})
 
@@ -102,10 +102,17 @@ func Update(c *gin.Context) {
 func UpdatePassword(c *gin.Context) {
 	var user models.UserPassword
 	var err = c.BindJSON(&user)
+
+	var paramID = c.Param("id")
 	var tokenID = fmt.Sprintf("%v", c.MustGet("id"))
 
 	if err != nil {
 		c.JSON(400, gin.H{"Incorrect input data": err.Error()})
+		return
+	}
+
+	if user.ID != paramID {
+		c.JSON(400, gin.H{"Incorrect input data": "Ids in body and request do not match."})
 		return
 	}
 
@@ -132,20 +139,14 @@ func UpdatePassword(c *gin.Context) {
 
 // Archive a user (soft delete)
 func Archive(c *gin.Context) {
-	var user models.UserID
+	var ID = c.Param("id")
 	var tokenID = fmt.Sprintf("%v", c.MustGet("id"))
 
-	var err = c.BindJSON(&user)
-	if err != nil {
-		c.JSON(400, gin.H{"Incorrect input data": err.Error()})
+	if !matchIDs(c, ID, tokenID) {
 		return
 	}
 
-	if !matchIDs(c, user.ID, tokenID) {
-		return
-	}
-
-	models.ArchiveUser(user)
+	models.ArchiveUser(ID)
 
 	c.JSON(200, gin.H{
 		"message": "User archived",
@@ -156,13 +157,14 @@ func Archive(c *gin.Context) {
 
 // Delete user controller function
 func Delete(c *gin.Context) {
+	var ID = c.Param("id")
 	var tokenID = fmt.Sprintf("%v", c.MustGet("id"))
 
-	if !matchIDs(c, c.Param("id"), tokenID) {
+	if !matchIDs(c, ID, tokenID) {
 		return
 	}
 
-	models.DeleteUser(tokenID)
+	models.DeleteUser(ID)
 
 	c.JSON(200, gin.H{
 		"message": "User removed",
@@ -172,6 +174,7 @@ func Delete(c *gin.Context) {
 
 // Connect controller function
 func Connect(c *gin.Context) {
+	// var paramID = c.Param("id")
 	var connection models.User
 	err := c.BindJSON(&connection)
 
@@ -189,6 +192,11 @@ func Connect(c *gin.Context) {
 		})
 		return
 	}
+
+	// if user.ID != paramID {
+	// 	c.JSON(400, gin.H{"Incorrect input data": "Ids in body and request do not match."})
+	// 	return
+	// }
 
 	// Check if the provided password is good
 	check := authentication.CheckPasswordHash(connection.Password+user.Salt, user.Password)
@@ -212,22 +220,15 @@ func Connect(c *gin.Context) {
 
 // LogOut controller function
 func LogOut(c *gin.Context) {
-	var logOut models.UserID
-	err := c.BindJSON(&logOut)
+	var paramID = c.Param("id")
 	var tokenID = fmt.Sprintf("%v", c.MustGet("id"))
 
-	// Check input formatting
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"Incorrect input data": err.Error()})
-		return
-	}
-
-	if !matchIDs(c, logOut.ID, tokenID) {
+	if !matchIDs(c, paramID, tokenID) {
 		return
 	}
 
 	// Setting reauth var to true to force the user to reconnect
-	ID, _ := strconv.Atoi(logOut.ID)
+	ID, _ := strconv.Atoi(paramID)
 	models.SetReauth(ID, true)
 	c.JSON(http.StatusOK, gin.H{
 		"message": "User logged out.",

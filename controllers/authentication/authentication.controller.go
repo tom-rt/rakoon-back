@@ -3,9 +3,9 @@ package authentication
 import (
 	"math/rand"
 	"os"
-	"rakoon/rakoon-back/controllers/utils"
 	"rakoon/rakoon-back/models"
 	"strings"
+	"time"
 
 	"crypto/hmac"
 	"crypto/sha256"
@@ -55,8 +55,8 @@ func RefreshToken(c *gin.Context) {
 	}
 
 	// Check expiration duration
-	duration := utils.NowAsUnixMilli() - payload.Iat
-	if duration > utils.HoursToMilliseconds(24) {
+	duration := nowAsUnixMilli() - payload.Iat
+	if duration > hoursToMilliseconds(24) {
 		models.SetReauth(payload.ID, true)
 		c.JSON(401, gin.H{
 			"message": "Token expired more than a week ago, please reconnect.",
@@ -105,9 +105,9 @@ func GenerateToken(id int) string {
 	payload = new(models.JwtPayload)
 	payload.ID = id
 	payload.IsAdmin = isAdmin(payload.ID)
-	now := utils.NowAsUnixMilli()
+	now := nowAsUnixMilli()
 	payload.Iat = now
-	payload.Exp = now + utils.MinutesToMilliseconds(15)
+	payload.Exp = now + minutesToMilliseconds(15)
 	jsonPayload, _ := json.Marshal(payload)
 	encPayload := base64.RawURLEncoding.EncodeToString([]byte(string(jsonPayload)))
 
@@ -154,7 +154,7 @@ func VerifyToken(encHeader string, encPayload string, encSignature string) (isVa
 	}
 
 	// Check token validity date
-	now := utils.NowAsUnixMilli()
+	now := nowAsUnixMilli()
 	if now >= payload.Exp {
 		return false, "Token has expired", 401, -1
 	}
@@ -213,4 +213,16 @@ func GenerateSalt(saltLength int) string {
 		salt[i] = letterBytes[rand.Intn(len(letterBytes))]
 	}
 	return string(salt)
+}
+
+func minutesToMilliseconds(min int) int {
+	return min * 60000
+}
+
+func hoursToMilliseconds(hours int) int {
+	return hours * 3600000
+}
+
+func nowAsUnixMilli() int {
+	return int(time.Now().UnixNano() / 1e6)
 }
