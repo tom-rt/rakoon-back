@@ -1,12 +1,13 @@
 ## DOING
 
-Ids in route parameters for connection ?
+In matchs Id, check id is alphanumeric, and 404 ?
 
 ## TODO
 
-In matchs Id, check id is alphanumeric, and 404 ?
 end to end tests
-Add admin restricted routes ? Non archived restricted routes ?
+
+Add a swagger like documentation in the README
+Add admin restricted routes ? Non archived restricted routes
 
 Forgotten password feature
 Account validation by mail

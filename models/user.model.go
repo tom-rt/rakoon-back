@@ -34,13 +34,13 @@ type UserID struct {
 
 // UserUpdate input for user updated values
 type UserUpdate struct {
-	ID   string `db:"id" json:"id" binding:"required"`
+	ID   string `db:"id" json:"id"`
 	Name string `db:"name" json:"name" binding:"required"`
 }
 
 // UserPassword input for user's password
 type UserPassword struct {
-	ID       string `db:"id" json:"id" binding:"required"`
+	ID       string `db:"id" json:"id"`
 	Password string `db:"password" json:"password" binding:"required"`
 }
 

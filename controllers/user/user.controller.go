@@ -84,6 +84,7 @@ func Update(c *gin.Context) {
 		c.JSON(400, gin.H{"Incorrect input data": err.Error()})
 		return
 	}
+	update.ID = c.Param("id")
 
 	if !matchIDs(c, update.ID, tokenID) {
 		return
@@ -103,18 +104,13 @@ func UpdatePassword(c *gin.Context) {
 	var user models.UserPassword
 	var err = c.BindJSON(&user)
 
-	var paramID = c.Param("id")
 	var tokenID = fmt.Sprintf("%v", c.MustGet("id"))
 
 	if err != nil {
 		c.JSON(400, gin.H{"Incorrect input data": err.Error()})
 		return
 	}
-
-	if user.ID != paramID {
-		c.JSON(400, gin.H{"Incorrect input data": "Ids in body and request do not match."})
-		return
-	}
+	user.ID = c.Param("id")
 
 	if !matchIDs(c, user.ID, tokenID) {
 		return
@@ -174,7 +170,6 @@ func Delete(c *gin.Context) {
 
 // Connect controller function
 func Connect(c *gin.Context) {
-	// var paramID = c.Param("id")
 	var connection models.User
 	err := c.BindJSON(&connection)
 
@@ -192,11 +187,6 @@ func Connect(c *gin.Context) {
 		})
 		return
 	}
-
-	// if user.ID != paramID {
-	// 	c.JSON(400, gin.H{"Incorrect input data": "Ids in body and request do not match."})
-	// 	return
-	// }
 
 	// Check if the provided password is good
 	check := authentication.CheckPasswordHash(connection.Password+user.Salt, user.Password)
