@@ -227,9 +227,17 @@ func LogOut(c *gin.Context) {
 
 // This function checks if the id present in the token (retrieved by the middleware) matches with the id in the route parameters, or in the route body.
 func matchIDs(c *gin.Context, ID string, tokenID string) bool {
-	if tokenID != ID {
+	_, err := strconv.Atoi(ID)
+	if err != nil {
 		c.JSON(400, gin.H{
-			"message": "Wrong id.",
+			"message": "Id not valid",
+		})
+		return false
+	}
+
+	if tokenID != ID {
+		c.JSON(403, gin.H{
+			"message": "Forbidden.",
 		})
 		return false
 	}

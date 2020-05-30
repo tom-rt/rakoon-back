@@ -1,11 +1,8 @@
 ## DOING
 
-In matchs Id, check id is alphanumeric, and 404 ?
-On create, return newly created value
+end to end tests
 
 ## TODO
-
-end to end tests
 
 Add a swagger like documentation in the README
 Add admin restricted routes ? Non archived restricted routes
