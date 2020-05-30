@@ -1,8 +1,8 @@
 package routes
 
 import (
-	"rakoon/rakoon-back/controllers/authentication"
-	"rakoon/rakoon-back/controllers/user"
+	"rakoon/rakoon-back/handlers/authentication"
+	"rakoon/rakoon-back/handlers/user"
 	"rakoon/rakoon-back/middleware"
 
 	"github.com/gin-gonic/gin"

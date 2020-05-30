@@ -3,7 +3,7 @@ package user
 import (
 	"fmt"
 	"net/http"
-	"rakoon/rakoon-back/controllers/authentication"
+	"rakoon/rakoon-back/handlers/authentication"
 	"rakoon/rakoon-back/models"
 	"strconv"
 	"time"
