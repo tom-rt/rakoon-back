@@ -6,6 +6,7 @@ end to end tests
 
 Add a swagger like documentation in the README
 Add admin restricted routes ? Non archived restricted routes
+Dockefile
 
 Forgotten password feature
 Account validation by mail
