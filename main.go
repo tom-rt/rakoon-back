@@ -6,8 +6,6 @@ import (
 
 	"rakoon/rakoon-back/db"
 	"rakoon/rakoon-back/routes"
-
-	"github.com/gin-gonic/gin"
 )
 
 func main() {
@@ -18,8 +16,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	r := gin.Default()
 	db.InitDb()
-	routes.InitRoutes(r)
+	r := routes.SetupRouter()
 	r.Run(":8081")
 }

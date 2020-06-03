@@ -8,20 +8,21 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// InitRoutes calls the routes init
-func InitRoutes(r *gin.Engine) {
+// SetupRouter calls the routes init
+func SetupRouter() *gin.Engine {
+	router := gin.Default()
 
-	r.Use(middleware.CorsHandling)
+	router.Use(middleware.CorsHandling)
 
 	// Public routes
-	public := r.Group("/v1")
+	public := router.Group("/v1")
 
 	public.POST("/user", func(c *gin.Context) { user.Create(c) })
 	public.POST("/user/connect", func(c *gin.Context) { user.Connect(c) })
 	public.POST("/refresh/token", func(c *gin.Context) { authentication.RefreshToken(c) })
 
 	// Private Routes
-	private := r.Group("/v1")
+	private := router.Group("/v1")
 	private.Use(middleware.JwtHandling)
 
 	private.GET("/user/:id", func(c *gin.Context) { user.Get(c) })
@@ -30,4 +31,6 @@ func InitRoutes(r *gin.Engine) {
 	private.PUT("/user/:id/logout", func(c *gin.Context) { user.LogOut(c) })
 	private.PUT("/user/:id/archive", func(c *gin.Context) { user.Archive(c) })
 	private.DELETE("/user/:id", func(c *gin.Context) { user.Delete(c) })
+
+	return router
 }

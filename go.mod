@@ -8,4 +8,5 @@ require (
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/lib/pq v1.1.1
 	golang.org/x/crypto v0.0.0-20191205180655-e7c4368fe9dd
+	gopkg.in/go-playground/assert.v1 v1.2.1
 )
