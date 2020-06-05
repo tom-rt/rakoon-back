@@ -18,7 +18,7 @@ func Create(c *gin.Context) {
 
 	// Check formatting
 	if err != nil {
-		c.JSON(400, gin.H{"Incorrect ay input data": err.Error()})
+		c.JSON(400, gin.H{"Incorrect input data": err.Error()})
 		return
 	}
 
@@ -49,6 +49,7 @@ func Create(c *gin.Context) {
 
 	// Subscription success
 	c.JSON(201, gin.H{
+		"id":    id,
 		"token": token,
 	})
 
