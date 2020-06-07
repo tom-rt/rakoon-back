@@ -18,8 +18,17 @@ import (
 )
 
 type UserCreate struct {
-	ID    int    `json:"id"`
-	Token string `json:"token"`
+	ID    int    `json:"id" binding:"required"`
+	Token string `json:"token" binfing:"required"`
+}
+
+type UserConnect struct {
+	Token string `json:"token" binding:"required"`
+}
+
+type UserGet struct {
+	Name   string `json:"name" binding:"required"`
+	Reauth bool   `json:"reauth" binding:"required"`
 }
 
 var router *gin.Engine
@@ -107,7 +116,8 @@ func TestUserConnection(t *testing.T) {
 	cleanUser(ret.ID, ret.Token)
 }
 
-func TestUserPassword(t *testing.T) {
+// Asserts the user password is properly checked
+func TestUserPasswordConnect(t *testing.T) {
 	var createStr = []byte(`{"name":"Tom", "password": "pwdd"}`)
 	firstRec := httptest.NewRecorder()
 	firstReq, _ := http.NewRequest("POST", "/v1/user", bytes.NewBuffer(createStr))
@@ -133,7 +143,8 @@ func TestUserPassword(t *testing.T) {
 	cleanUser(ret.ID, ret.Token)
 }
 
-func TestUserName(t *testing.T) {
+// Asserts a non existinig user can't connect
+func TestUserNameConnect(t *testing.T) {
 	var createStr = []byte(`{"name":"Tom", "password": "pwdd"}`)
 	firstRec := httptest.NewRecorder()
 	firstReq, _ := http.NewRequest("POST", "/v1/user", bytes.NewBuffer(createStr))
@@ -189,6 +200,62 @@ func TestUserLogout(t *testing.T) {
 
 	router.ServeHTTP(scndRec, scndReq)
 	assert.Equal(t, 200, scndRec.Code)
+
+	thirdRec := httptest.NewRecorder()
+	thirdReq, _ := http.NewRequest("POST", "/v1/user/connect", bytes.NewBuffer(jsonStr))
+	thirdReq.Header.Add("Content-Type", "application/json")
+	router.ServeHTTP(thirdRec, thirdReq)
+	assert.Equal(t, 200, scndRec.Code)
+	var r UserConnect
+	err = json.Unmarshal([]byte(thirdRec.Body.String()), &r)
+	if err != nil {
+		log.Fatal("Bad output", err.Error())
+		t.Fail()
+	}
+
+	cleanUser(ret.ID, r.Token)
+}
+
+// Asserts you can get a user's data
+func TestUserGet(t *testing.T) {
+	var jsonStr = []byte(`{"name":"Bonjour", "password": "Bonsoir"}`)
+
+	firstRec := httptest.NewRecorder()
+	firstReq, _ := http.NewRequest("POST", "/v1/user", bytes.NewBuffer(jsonStr))
+	firstReq.Header.Add("Content-Type", "application/json")
+
+	router.ServeHTTP(firstRec, firstReq)
+
+	assert.Equal(t, 201, firstRec.Code)
+
+	var ret UserCreate
+	err := json.Unmarshal([]byte(firstRec.Body.String()), &ret)
+	if err != nil {
+		log.Fatal("Bad output", err.Error())
+		t.Fail()
+	}
+
+	var url string = "/v1/user/" + strconv.Itoa(ret.ID)
+	fmt.Println(url, ret.Token, ret.ID)
+	var bearer = "Bearer " + ret.Token
+
+	scndRec := httptest.NewRecorder()
+	scndReq, _ := http.NewRequest("GET", url, nil)
+	scndReq.Header.Add("Content-Type", "application/json")
+	scndReq.Header.Add("Authorization", bearer)
+
+	router.ServeHTTP(scndRec, scndReq)
+
+	var get UserGet
+	err = json.Unmarshal([]byte(scndRec.Body.String()), &get)
+	if err != nil {
+		log.Fatal("Bad output", err.Error())
+		t.Fail()
+	}
+
+	assert.Equal(t, scndRec.Code, 200)
+	assert.Equal(t, get.Name, "Bonjour")
+	assert.Equal(t, get.Reauth, false)
 
 	cleanUser(ret.ID, ret.Token)
 }
