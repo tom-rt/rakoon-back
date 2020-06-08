@@ -3,7 +3,6 @@ package test
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -75,7 +74,6 @@ func TestUserDuplicate(t *testing.T) {
 	router.ServeHTTP(firstRec, firstReq)
 	router.ServeHTTP(scndRec, scndReq)
 
-	fmt.Println(scndRec.Body.String())
 	assert.Equal(t, 409, scndRec.Code)
 
 	var ret UserCreate
@@ -190,7 +188,6 @@ func TestUserLogout(t *testing.T) {
 	}
 
 	var url string = "/v1/user/" + strconv.Itoa(ret.ID) + "/logout"
-	fmt.Println(url, ret.Token, ret.ID)
 	var bearer = "Bearer " + ret.Token
 
 	scndRec := httptest.NewRecorder()
@@ -236,11 +233,55 @@ func TestUserGet(t *testing.T) {
 	}
 
 	var url string = "/v1/user/" + strconv.Itoa(ret.ID)
-	fmt.Println(url, ret.Token, ret.ID)
 	var bearer = "Bearer " + ret.Token
 
 	scndRec := httptest.NewRecorder()
 	scndReq, _ := http.NewRequest("GET", url, nil)
+	scndReq.Header.Add("Content-Type", "application/json")
+	scndReq.Header.Add("Authorization", bearer)
+
+	router.ServeHTTP(scndRec, scndReq)
+
+	var get UserGet
+	err = json.Unmarshal([]byte(scndRec.Body.String()), &get)
+	if err != nil {
+		log.Fatal("Bad output", err.Error())
+		t.Fail()
+	}
+
+	assert.Equal(t, scndRec.Code, 200)
+	assert.Equal(t, get.Name, "Bonjour")
+	assert.Equal(t, get.Reauth, false)
+
+	cleanUser(ret.ID, ret.Token)
+}
+
+// Asserts you can get a user's data
+func TestUserUpdate(t *testing.T) {
+	var createJSONStr = []byte(`{"name":"toBeModified", "password": "hellloworld"}`)
+
+	firstRec := httptest.NewRecorder()
+	firstReq, _ := http.NewRequest("POST", "/v1/user", bytes.NewBuffer(createJSONStr))
+	firstReq.Header.Add("Content-Type", "application/json")
+
+	router.ServeHTTP(firstRec, firstReq)
+
+	assert.Equal(t, 201, firstRec.Code)
+
+	var ret UserCreate
+	err := json.Unmarshal([]byte(firstRec.Body.String()), &ret)
+	if err != nil {
+		log.Fatal("Bad output", err.Error())
+		t.Fail()
+	}
+
+	var updateJSONStr = []byte(`{"name":"Alain"}`)
+
+	var url string = "/v1/user/" + strconv.Itoa(ret.ID)
+	var bearer = "Bearer " + ret.Token
+
+	scndRec := httptest.NewRecorder()
+	scndReq, _ := http.NewRequest("PUT", url, bytes.NewBuffer(updateJSONStr))
 	scndReq.Header.Add("Content-Type", "application/json")
 	scndReq.Header.Add("Authorization", bearer)
 

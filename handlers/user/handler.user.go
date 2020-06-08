@@ -89,6 +89,14 @@ func Update(c *gin.Context) {
 		return
 	}
 
+	// Check if the user name is already taken
+	if authentication.UserNameExists(update.Name) {
+		c.JSON(409, gin.H{
+			"message": "Conflict: username already taken.",
+		})
+		return
+	}
+
 	models.UpdateUser(update)
 
 	c.JSON(200, gin.H{
