@@ -26,8 +26,11 @@ type UserConnect struct {
 }
 
 type UserGet struct {
-	Name   string `json:"name" binding:"required"`
-	Reauth bool   `json:"reauth" binding:"required"`
+	ID        int    `json:"id" binding:"required"`
+	Name      string `json:"name" binding:"required"`
+	Reauth    bool   `json:"reauth" binding:"required"`
+	CreatedOn string `json:"last_login" binding:"required"`
+	LastLogin string `json:"created_on" binding:"required"`
 }
 
 var router *gin.Engine
@@ -263,11 +266,8 @@ func TestUserUpdate(t *testing.T) {
 	firstRec := httptest.NewRecorder()
 	firstReq, _ := http.NewRequest("POST", "/v1/user", bytes.NewBuffer(createJSONStr))
 	firstReq.Header.Add("Content-Type", "application/json")
-
 	router.ServeHTTP(firstRec, firstReq)
-
 	assert.Equal(t, 201, firstRec.Code)
-
 	var ret UserCreate
 	err := json.Unmarshal([]byte(firstRec.Body.String()), &ret)
 	if err != nil {
@@ -276,26 +276,31 @@ func TestUserUpdate(t *testing.T) {
 	}
 
 	var updateJSONStr = []byte(`{"name":"Alain"}`)
-
 	var url string = "/v1/user/" + strconv.Itoa(ret.ID)
 	var bearer = "Bearer " + ret.Token
-
 	scndRec := httptest.NewRecorder()
 	scndReq, _ := http.NewRequest("PUT", url, bytes.NewBuffer(updateJSONStr))
 	scndReq.Header.Add("Content-Type", "application/json")
 	scndReq.Header.Add("Authorization", bearer)
-
 	router.ServeHTTP(scndRec, scndReq)
+	assert.Equal(t, scndRec.Code, 200)
 
+	thirdRec := httptest.NewRecorder()
+	url = "/v1/user/" + strconv.Itoa(ret.ID)
+	thirdReq, _ := http.NewRequest("GET", url, nil)
+	thirdReq.Header.Add("Content-Type", "application/json")
+	thirdReq.Header.Add("Authorization", bearer)
+	router.ServeHTTP(thirdRec, thirdReq)
 	var get UserGet
-	err = json.Unmarshal([]byte(scndRec.Body.String()), &get)
+	err = json.Unmarshal([]byte(thirdRec.Body.String()), &get)
 	if err != nil {
 		log.Fatal("Bad output", err.Error())
 		t.Fail()
 	}
 
-	assert.Equal(t, scndRec.Code, 200)
-	assert.Equal(t, get.Name, "Bonjour")
+	assert.Equal(t, thirdRec.Code, 200)
+	assert.Equal(t, get.ID, ret.ID)
+	assert.Equal(t, get.Name, "Alain")
 	assert.Equal(t, get.Reauth, false)
 
 	cleanUser(ret.ID, ret.Token)

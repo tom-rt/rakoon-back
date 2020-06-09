@@ -9,11 +9,11 @@ POST    "/user/connect"
 GET     "/user/:id"
 PUT     "/user/:id/logout"
 DELETE  "/user/:id"
+PUT     "/user/:id"
 
 Not tested:
 
 POST    "/refresh/token"
-PUT     "/user/:id"
 PUT     "/user/:id/password"
 PUT     "/user/:id/archive"
 
