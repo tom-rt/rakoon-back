@@ -259,7 +259,7 @@ func TestUserGet(t *testing.T) {
 	cleanUser(ret.ID, ret.Token)
 }
 
-// Asserts you can get a user's data
+// Asserts you can update a user's data
 func TestUserUpdate(t *testing.T) {
 	var createJSONStr = []byte(`{"name":"toBeModified", "password": "hellloworld"}`)
 
@@ -304,6 +304,90 @@ func TestUserUpdate(t *testing.T) {
 	assert.Equal(t, get.Reauth, false)
 
 	cleanUser(ret.ID, ret.Token)
+}
+
+// Asserts you can archive a user'
+func TestUserArchive(t *testing.T) {
+	var createJSONStr = []byte(`{"name":"toArchive", "password": "123456789"}`)
+
+	firstRec := httptest.NewRecorder()
+	firstReq, _ := http.NewRequest("POST", "/v1/user", bytes.NewBuffer(createJSONStr))
+	firstReq.Header.Add("Content-Type", "application/json")
+	router.ServeHTTP(firstRec, firstReq)
+	assert.Equal(t, 201, firstRec.Code)
+	var ret UserCreate
+	err := json.Unmarshal([]byte(firstRec.Body.String()), &ret)
+	if err != nil {
+		log.Fatal("Bad output", err.Error())
+		t.Fail()
+	}
+
+	var url string = "/v1/user/" + strconv.Itoa(ret.ID) + "/archive"
+	var bearer = "Bearer " + ret.Token
+	scndRec := httptest.NewRecorder()
+	scndReq, _ := http.NewRequest("PUT", url, nil)
+	scndReq.Header.Add("Content-Type", "application/json")
+	scndReq.Header.Add("Authorization", bearer)
+	router.ServeHTTP(scndRec, scndReq)
+
+	assert.Equal(t, scndRec.Code, 200)
+
+	var jsonStr = []byte(`{"name":"toArchive", "password": "123456789"}`)
+	thirdRec := httptest.NewRecorder()
+	thirdReq, _ := http.NewRequest("POST", "/v1/user/connect", bytes.NewBuffer(jsonStr))
+	thirdReq.Header.Add("Content-Type", "application/json")
+	router.ServeHTTP(thirdRec, thirdReq)
+	var connect UserConnect
+	err = json.Unmarshal([]byte(thirdRec.Body.String()), &connect)
+	if err != nil {
+		log.Fatal("Bad output", err.Error())
+		t.Fail()
+	}
+
+	cleanUser(ret.ID, connect.Token)
+}
+
+// Asserts you can archive a user'
+func TestUserPasswordChange(t *testing.T) {
+	var createJSONStr = []byte(`{"name":"Tom", "password": "qwerty"}`)
+	firstRec := httptest.NewRecorder()
+	firstReq, _ := http.NewRequest("POST", "/v1/user", bytes.NewBuffer(createJSONStr))
+	firstReq.Header.Add("Content-Type", "application/json")
+	router.ServeHTTP(firstRec, firstReq)
+	assert.Equal(t, 201, firstRec.Code)
+	var ret UserCreate
+	err := json.Unmarshal([]byte(firstRec.Body.String()), &ret)
+	if err != nil {
+		log.Fatal("Bad output", err.Error())
+		t.Fail()
+	}
+
+	var passwordJSONStr = []byte(`{"password": "12345"}`)
+	var url string = "/v1/user/" + strconv.Itoa(ret.ID) + "/password"
+	var bearer = "Bearer " + ret.Token
+	scndRec := httptest.NewRecorder()
+	scndReq, _ := http.NewRequest("PUT", url, bytes.NewBuffer(passwordJSONStr))
+	scndReq.Header.Add("Content-Type", "application/json")
+	scndReq.Header.Add("Authorization", bearer)
+	router.ServeHTTP(scndRec, scndReq)
+
+	assert.Equal(t, scndRec.Code, 200)
+
+	var connectJSON = []byte(`{"name":"Tom", "password": "12345"}`)
+	thirdRec := httptest.NewRecorder()
+	thirdReq, _ := http.NewRequest("POST", "/v1/user/connect", bytes.NewBuffer(connectJSON))
+	thirdReq.Header.Add("Content-Type", "application/json")
+	router.ServeHTTP(thirdRec, thirdReq)
+	var connect UserConnect
+	err = json.Unmarshal([]byte(thirdRec.Body.String()), &connect)
+	if err != nil {
+		log.Fatal("Bad output", err.Error())
+		t.Fail()
+	}
+
+	assert.Equal(t, thirdRec.Code, 200)
+
+	cleanUser(ret.ID, connect.Token)
 }
 
 // Cleans a user created just for the test

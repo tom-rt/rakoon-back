@@ -10,12 +10,14 @@ GET     "/user/:id"
 PUT     "/user/:id/logout"
 DELETE  "/user/:id"
 PUT     "/user/:id"
+PUT     "/user/:id/archive"
+PUT     "/user/:id/password"
 
 Not tested:
 
 POST    "/refresh/token"
-PUT     "/user/:id/password"
-PUT     "/user/:id/archive"
+Cases: a user cant modify access ressources that do not belong to him
+Cases: a modified token doesnt work
 
 ## TODO
 
