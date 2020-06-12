@@ -16,7 +16,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	db.InitDb()
+	db.InitDB()
 	r := routes.SetupRouter()
 	r.Run(":8081")
 }

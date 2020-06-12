@@ -11,8 +11,8 @@ import (
 // DB golbal sqlx  connection instance
 var DB *sqlx.DB
 
-//InitDb func
-func InitDb() {
+//InitDB func
+func InitDB() {
 	var err error
 	var dbHost string = os.Getenv("DB_HOST")
 	var dbPort string = os.Getenv("DB_PORT")
@@ -26,5 +26,9 @@ func InitDb() {
 		fmt.Println("Error connecting to the database:", err)
 		os.Exit(1)
 	}
+
+}
+
+func CloseDB() {
 
 }

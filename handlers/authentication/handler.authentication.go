@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"os"
 	"rakoon/rakoon-back/models"
+	"strconv"
 	"strings"
 	"time"
 
@@ -56,7 +57,16 @@ func RefreshToken(c *gin.Context) {
 
 	// Check expiration duration
 	duration := nowAsUnixMilli() - payload.Iat
-	if duration > hoursToMilliseconds(24) {
+	var refreshLimit int
+	var envRefreshLimit string = os.Getenv("TOKEN_REFRESH_HOURS")
+
+	if envRefreshLimit != "" {
+		refreshLimit, _ = strconv.Atoi(envRefreshLimit)
+	} else {
+		refreshLimit = 24
+	}
+
+	if duration > hoursToMilliseconds(refreshLimit) {
 		models.SetReauth(payload.ID, true)
 		c.JSON(401, gin.H{
 			"message": "Token expired more than a week ago, please reconnect.",
@@ -93,6 +103,14 @@ func GenerateToken(id int) string {
 	var payload *models.JwtPayload
 	const alg = "HS256"
 	const typ = "JWT"
+	var validityLimit int
+	var envValidityLimit string = os.Getenv("TOKEN_VALIDITY_MINUTES")
+
+	if envValidityLimit != "" {
+		validityLimit, _ = strconv.Atoi(envValidityLimit)
+	} else {
+		validityLimit = 15
+	}
 
 	// Building and encrypting header
 	header = new(models.JwtHeader)
@@ -107,7 +125,7 @@ func GenerateToken(id int) string {
 	payload.IsAdmin = isAdmin(payload.ID)
 	now := nowAsUnixMilli()
 	payload.Iat = now
-	payload.Exp = now + minutesToMilliseconds(15)
+	payload.Exp = now + minutesToMilliseconds(validityLimit)
 	jsonPayload, _ := json.Marshal(payload)
 	encPayload := base64.RawURLEncoding.EncodeToString([]byte(string(jsonPayload)))
 
