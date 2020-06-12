@@ -10,7 +10,7 @@ import (
 
 // SetupRouter calls the routes init
 func SetupRouter() *gin.Engine {
-	router := gin.Default()
+	router := gin.New()
 
 	router.Use(middleware.CorsHandling)
 

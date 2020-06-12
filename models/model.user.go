@@ -27,6 +27,17 @@ type UserPublic struct {
 	CreatedOn time.Time `db:"created_on" json:"created_on"`
 }
 
+//UserCreate object
+type UserCreate struct {
+	ID    int    `json:"id" binding:"required"`
+	Token string `json:"token" binfing:"required"`
+}
+
+//UserConnect object
+type UserConnect struct {
+	Token string `json:"token" binding:"required"`
+}
+
 // UserID obj
 type UserID struct {
 	ID string `db:"id" json:"id" binding:"required"`
