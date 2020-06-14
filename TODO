@@ -1,29 +1,8 @@
 ## DOING
 
-END TO END TESTS:
-
-Tested:
-
-POST    "/user"
-POST    "/user/connect"
-GET     "/user/:id"
-PUT     "/user/:id/logout"
-DELETE  "/user/:id"
-PUT     "/user/:id"
-PUT     "/user/:id/archive"
-PUT     "/user/:id/password"
-
-Not tested:
-
-POST    "/refresh/token"
-Cases: a user cant modify access ressources that do not belong to him
-Cases: a modified token doesnt work
-
 ## TODO
 
-Add a swagger like documentation in the README
-Add admin restricted routes ? Non archived restricted routes
-Dockefile
+Dockerfile
 
 Forgotten password feature
 Account validation by mail

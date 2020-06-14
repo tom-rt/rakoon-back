@@ -19,12 +19,12 @@ func SetupRouter() *gin.Engine {
 
 	public.POST("/user", func(c *gin.Context) { user.Create(c) })
 	public.POST("/user/connect", func(c *gin.Context) { user.Connect(c) })
-	public.POST("/refresh/token", func(c *gin.Context) { authentication.RefreshToken(c) })
 
 	// Private Routes
 	private := router.Group("/v1")
 	private.Use(middleware.JwtHandling)
 
+	private.POST("/refresh/token", func(c *gin.Context) { authentication.RefreshToken(c) })
 	private.GET("/user/:id", func(c *gin.Context) { user.Get(c) })
 	private.PUT("/user/:id", func(c *gin.Context) { user.Update(c) })
 	private.PUT("/user/:id/password", func(c *gin.Context) { user.UpdatePassword(c) })

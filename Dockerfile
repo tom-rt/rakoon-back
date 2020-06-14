@@ -6,6 +6,4 @@ COPY ./ /app
 
 RUN go mod download
 
-RUN go get -u github.com/cosmtrek/air
-
-CMD air
+CMD go run main.go

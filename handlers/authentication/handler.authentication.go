@@ -58,7 +58,7 @@ func RefreshToken(c *gin.Context) {
 	// Check expiration duration
 	duration := nowAsUnixMilli() - payload.Iat
 	var refreshLimit int
-	var envRefreshLimit string = os.Getenv("TOKEN_REFRESH_HOURS")
+	var envRefreshLimit string = os.Getenv("TOKEN_LIMIT_HOURS")
 
 	if envRefreshLimit != "" {
 		refreshLimit, _ = strconv.Atoi(envRefreshLimit)
@@ -69,7 +69,7 @@ func RefreshToken(c *gin.Context) {
 	if duration > hoursToMilliseconds(refreshLimit) {
 		models.SetReauth(payload.ID, true)
 		c.JSON(401, gin.H{
-			"message": "Token expired more than a week ago, please reconnect.",
+			"message": "Token has expired and cannot be refreshed, please reconnect",
 		})
 		return
 	}
@@ -91,8 +91,7 @@ func RefreshToken(c *gin.Context) {
 
 	newToken := GenerateToken(payload.ID)
 	c.JSON(200, gin.H{
-		"message": "Token refreshed.",
-		"token":   newToken,
+		"token": newToken,
 	})
 	return
 }
