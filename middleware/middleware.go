@@ -4,21 +4,8 @@ import (
 	"rakoon/rakoon-back/handlers/authentication"
 	"strings"
 
-	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
-
-//CorsHandling middleware, allows cross origins
-func CorsHandling(c *gin.Context) {
-
-	cors.New(cors.Config{
-		AllowOrigins:     []string{"*"},
-		AllowMethods:     []string{"POST", "OPTIONS", "GET", "PUT", "DELETE"},
-		AllowHeaders:     []string{"Content-Type", "Content-Length", "Accept-Encoding", "X-CSRF-Token", "Authorization", "accept", "origin", "Cache-Control", "X-Requested-With"},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
-	})
-}
 
 //JwtHandling middleware, checks if the token is well formatted and has expired
 func JwtHandling(c *gin.Context) {

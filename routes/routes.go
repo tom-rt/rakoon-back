@@ -5,14 +5,16 @@ import (
 	"rakoon/rakoon-back/handlers/user"
 	"rakoon/rakoon-back/middleware"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
 // SetupRouter calls the routes init
 func SetupRouter() *gin.Engine {
 	router := gin.New()
-
-	router.Use(middleware.CorsHandling)
+	config := cors.DefaultConfig()
+	config.AllowOrigins = []string{"*"}
+	router.Use(cors.New(config))
 
 	// Public routes
 	public := router.Group("/v1")
