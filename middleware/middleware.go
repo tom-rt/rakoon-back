@@ -14,7 +14,7 @@ func JwtHandling(c *gin.Context) {
 	// Check a token is present
 	_, checkToken := c.Request.Header["Authorization"]
 	if checkToken == false {
-		c.JSON(401, gin.H{
+		c.JSON(403, gin.H{
 			"message": "No token provided",
 		})
 		c.Abort()
@@ -26,7 +26,7 @@ func JwtHandling(c *gin.Context) {
 	bearer := strings.Split(authorization, "Bearer ")
 
 	if len(bearer) != 2 {
-		c.JSON(401, gin.H{
+		c.JSON(403, gin.H{
 			"message": "Bad token",
 		})
 		c.Abort()
@@ -37,7 +37,7 @@ func JwtHandling(c *gin.Context) {
 
 	splittedToken := strings.Split(token, ".")
 	if len(splittedToken) != 3 {
-		c.JSON(401, gin.H{
+		c.JSON(403, gin.H{
 			"message": "Bad token",
 		})
 		c.Abort()
