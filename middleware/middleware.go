@@ -24,16 +24,14 @@ func JwtHandling(c *gin.Context) {
 	// Check the token is formatted correctly
 	authorization := c.Request.Header["Authorization"][0]
 	bearer := strings.Split(authorization, "Bearer ")
-
 	if len(bearer) != 2 {
 		c.JSON(403, gin.H{
 			"message": "Bad token",
 		})
 		c.Abort()
 		return
-	} else {
-		token = bearer[1]
 	}
+	token = bearer[1]
 
 	splittedToken := strings.Split(token, ".")
 	if len(splittedToken) != 3 {

@@ -19,8 +19,26 @@ import (
 
 // RefreshToken controller function
 func RefreshToken(c *gin.Context) {
+	// Check a token is present
+	_, checkToken := c.Request.Header["Authorization"]
+	if checkToken == false {
+		c.JSON(403, gin.H{
+			"message": "No token provided",
+		})
+		c.Abort()
+		return
+	}
+
+	// Check if the token is formatted properly
 	authorization := c.Request.Header["Authorization"][0]
-	token := strings.Split(authorization, "Bearer ")[1]
+	bearer := strings.Split(authorization, "Bearer ")
+	if len(bearer) != 2 {
+		c.JSON(403, gin.H{
+			"message": "Bad token",
+		})
+		return
+	}
+	token := bearer[1]
 	splittedToken := strings.Split(token, ".")
 	if len(splittedToken) != 3 {
 		c.JSON(403, gin.H{
@@ -40,7 +58,7 @@ func RefreshToken(c *gin.Context) {
 	payload := new(models.JwtPayload)
 	err = json.Unmarshal([]byte(decPayload), payload)
 	if err != nil {
-		c.JSON(401, gin.H{
+		c.JSON(403, gin.H{
 			"message": "Bad token",
 		})
 		return
@@ -49,7 +67,7 @@ func RefreshToken(c *gin.Context) {
 	// Check signature
 	encSignature := GenerateSignature(encHeader, encPayload)
 	if encSignature != signature {
-		c.JSON(401, gin.H{
+		c.JSON(403, gin.H{
 			"message": "Bad signature",
 		})
 		return
@@ -66,7 +84,8 @@ func RefreshToken(c *gin.Context) {
 		refreshLimit = 24
 	}
 
-	if duration > hoursToMilliseconds(refreshLimit) {
+	// if duration > hoursToMilliseconds(refreshLimit) {
+	if duration > minutesToMilliseconds(refreshLimit) {
 		models.SetReauth(payload.ID, true)
 		c.JSON(401, gin.H{
 			"message": "Token has expired and cannot be refreshed, please reconnect",
@@ -83,7 +102,7 @@ func RefreshToken(c *gin.Context) {
 		})
 		return
 	} else if err != nil {
-		c.JSON(403, gin.H{
+		c.JSON(404, gin.H{
 			"message": "User does not exist.",
 		})
 		return
@@ -115,6 +134,7 @@ func GenerateToken(id int) string {
 	header = new(models.JwtHeader)
 	header.Alg = alg
 	header.Typ = typ
+	// Error return is ignored here as it cant fail.
 	jsonHeader, _ := json.Marshal(header)
 	encHeader := base64.RawURLEncoding.EncodeToString([]byte(string(jsonHeader)))
 
@@ -160,9 +180,9 @@ func VerifyToken(encHeader string, encPayload string, encSignature string) (isVa
 	var reauth bool
 	reauth, err = GetReauth(payload.ID)
 	if reauth {
-		return false, "Please reconnect", 403, -1
+		return false, "Please reconnect", 401, -1
 	} else if err != nil {
-		return false, "User id in token payload does not exist.", 403, -1
+		return false, "User id in token payload does not exist.", 404, -1
 	}
 
 	checkSignature := GenerateSignature(encHeader, encPayload)
@@ -173,7 +193,7 @@ func VerifyToken(encHeader string, encPayload string, encSignature string) (isVa
 	// Check token validity date
 	now := nowAsUnixMilli()
 	if now >= payload.Exp {
-		return false, "Token has expired", 401, -1
+		return false, "Token expired.", 401, -1
 	}
 
 	return true, "Token valid", 200, payload.ID

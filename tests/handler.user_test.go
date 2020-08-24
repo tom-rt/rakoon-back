@@ -6,13 +6,12 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
-
 	"rakoon/rakoon-back/db"
 	"rakoon/rakoon-back/models"
 	"rakoon/rakoon-back/routes"
 	"rakoon/rakoon-back/tests/utils"
-
 	"strconv"
+
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -25,6 +24,7 @@ func TestCreateUser(t *testing.T) {
 	var router *gin.Engine = routes.SetupRouter()
 
 	var user models.UserCreate = utils.CreateUser("TestUser", "qwerty1234", t, router)
+	user.Token = utils.ConnectUser("TestUser", "qwerty1234", t, router)
 
 	utils.CleanUser(user.ID, user.Token, t, router)
 	db.CloseDB()
@@ -36,10 +36,11 @@ func TestUserDuplicate(t *testing.T) {
 	var router *gin.Engine = routes.SetupRouter()
 
 	var user models.UserCreate = utils.CreateUser("John", "qwerty1234", t, router)
+	user.Token = utils.ConnectUser("John", "qwerty1234", t, router)
 
-	var scndStr = []byte(`{"name":"John", "password": "1234qwerty"}`)
+	var login = []byte(`{"name":"John", "password": "1234qwerty"}`)
 	record := httptest.NewRecorder()
-	request, _ := http.NewRequest("POST", "/v1/user", bytes.NewBuffer(scndStr))
+	request, _ := http.NewRequest("POST", "/v1/user", bytes.NewBuffer(login))
 	request.Header.Add("Content-Type", "application/json")
 
 	router.ServeHTTP(record, request)
@@ -49,20 +50,20 @@ func TestUserDuplicate(t *testing.T) {
 	db.CloseDB()
 }
 
-// Asserts a user can connect
+// // Asserts a user can connect
 func TestUserConnection(t *testing.T) {
 	db.InitDB()
 	var router *gin.Engine = routes.SetupRouter()
 
-	var uCreate models.UserCreate = utils.CreateUser("Alf", "qwerty1234", t, router)
+	var user models.UserCreate = utils.CreateUser("Alf", "qwerty1234", t, router)
 
-	var uConnect models.UserConnect = utils.ConnectUser("Alf", "qwerty1234", t, router)
+	user.Token = utils.ConnectUser("Alf", "qwerty1234", t, router)
 
-	utils.CleanUser(uCreate.ID, uConnect.Token, t, router)
+	utils.CleanUser(user.ID, user.Token, t, router)
 	db.CloseDB()
 }
 
-// Asserts the user password is properly checked
+// // Asserts the user password is properly checked
 func TestUserPasswordConnect(t *testing.T) {
 	db.InitDB()
 	var router *gin.Engine = routes.SetupRouter()
@@ -71,13 +72,14 @@ func TestUserPasswordConnect(t *testing.T) {
 
 	var connectStr = []byte(`{"name":"Tom", "password": "not the same password"}`)
 	record := httptest.NewRecorder()
-	request, _ := http.NewRequest("POST", "/v1/user/connect", bytes.NewBuffer(connectStr))
+	request, _ := http.NewRequest("POST", "/v1/user/login", bytes.NewBuffer(connectStr))
 	request.Header.Add("Content-Type", "application/json")
 
 	router.ServeHTTP(record, request)
 
 	assert.Equal(t, 404, record.Code)
 
+	user.Token = utils.ConnectUser("Tom", "qwerty1234", t, router)
 	utils.CleanUser(user.ID, user.Token, t, router)
 	db.CloseDB()
 }
@@ -98,6 +100,7 @@ func TestUserNameConnect(t *testing.T) {
 
 	assert.Equal(t, 404, record.Code)
 
+	user.Token = utils.ConnectUser("Tom", "qwerty1234", t, router)
 	utils.CleanUser(user.ID, user.Token, t, router)
 	db.CloseDB()
 }
@@ -108,6 +111,7 @@ func TestUserLogout(t *testing.T) {
 	var router *gin.Engine = routes.SetupRouter()
 
 	var user models.UserCreate = utils.CreateUser("Jon", "qwerty1234", t, router)
+	user.Token = utils.ConnectUser("Jon", "qwerty1234", t, router)
 
 	var url string = "/v1/user/" + strconv.Itoa(user.ID) + "/logout"
 	var bearer = "Bearer " + user.Token
@@ -120,9 +124,8 @@ func TestUserLogout(t *testing.T) {
 	router.ServeHTTP(record, request)
 	assert.Equal(t, 200, record.Code)
 
-	var uConnect models.UserConnect = utils.ConnectUser("Jon", "qwerty1234", t, router)
-
-	utils.CleanUser(user.ID, uConnect.Token, t, router)
+	user.Token = utils.ConnectUser("Jon", "qwerty1234", t, router)
+	utils.CleanUser(user.ID, user.Token, t, router)
 	db.CloseDB()
 }
 
@@ -132,6 +135,7 @@ func TestUserGet(t *testing.T) {
 	var router *gin.Engine = routes.SetupRouter()
 
 	var user models.UserCreate = utils.CreateUser("Jean", "qwerty1234", t, router)
+	user.Token = utils.ConnectUser("Jean", "qwerty1234", t, router)
 
 	var url string = "/v1/user/" + strconv.Itoa(user.ID)
 	var bearer = "Bearer " + user.Token
@@ -153,6 +157,7 @@ func TestUserGet(t *testing.T) {
 	assert.Equal(t, get.Name, "Jean")
 	assert.Equal(t, get.Reauth, false)
 
+	user.Token = utils.ConnectUser("Jean", "qwerty1234", t, router)
 	utils.CleanUser(user.ID, user.Token, t, router)
 	db.CloseDB()
 }
@@ -163,6 +168,7 @@ func TestUserUpdate(t *testing.T) {
 	var router *gin.Engine = routes.SetupRouter()
 
 	var user models.UserCreate = utils.CreateUser("Tom", "qwerty1234", t, router)
+	user.Token = utils.ConnectUser("Tom", "qwerty1234", t, router)
 
 	var updateJSONStr = []byte(`{"name":"Mike"}`)
 	var url string = "/v1/user/" + strconv.Itoa(user.ID)
@@ -202,6 +208,7 @@ func TestUserArchive(t *testing.T) {
 	var router *gin.Engine = routes.SetupRouter()
 
 	var user models.UserCreate = utils.CreateUser("Jean", "qwerty1234", t, router)
+	user.Token = utils.ConnectUser("Jean", "qwerty1234", t, router)
 
 	var url string = "/v1/user/" + strconv.Itoa(user.ID) + "/archive"
 	var bearer = "Bearer " + user.Token
@@ -214,9 +221,9 @@ func TestUserArchive(t *testing.T) {
 	assert.Equal(t, record.Code, 200)
 
 	// After an archive, the user must reconnect to be able to be deleted
-	var uConnect models.UserConnect = utils.ConnectUser("Jean", "qwerty1234", t, router)
+	user.Token = utils.ConnectUser("Jean", "qwerty1234", t, router)
 
-	utils.CleanUser(user.ID, uConnect.Token, t, router)
+	utils.CleanUser(user.ID, user.Token, t, router)
 	db.CloseDB()
 }
 
@@ -226,6 +233,7 @@ func TestUserPasswordChange(t *testing.T) {
 	var router *gin.Engine = routes.SetupRouter()
 
 	var user models.UserCreate = utils.CreateUser("foo", "qwerty1234", t, router)
+	user.Token = utils.ConnectUser("foo", "qwerty1234", t, router)
 
 	var passwordJSONStr = []byte(`{"password": "1234qwerty"}`)
 	var url string = "/v1/user/" + strconv.Itoa(user.ID) + "/password"
@@ -239,8 +247,8 @@ func TestUserPasswordChange(t *testing.T) {
 	assert.Equal(t, record.Code, 200)
 
 	// A user has to reconnect after a password change
-	var uConnect models.UserConnect = utils.ConnectUser("foo", "1234qwerty", t, router)
+	user.Token = utils.ConnectUser("foo", "1234qwerty", t, router)
 
-	utils.CleanUser(user.ID, uConnect.Token, t, router)
+	utils.CleanUser(user.ID, user.Token, t, router)
 	db.CloseDB()
 }

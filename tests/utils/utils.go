@@ -46,10 +46,10 @@ func CleanUser(ID int, token string, t *testing.T, router *gin.Engine) {
 }
 
 // ConnectUser connects a user
-func ConnectUser(name string, password string, t *testing.T, router *gin.Engine) models.UserConnect {
+func ConnectUser(name string, password string, t *testing.T, router *gin.Engine) string {
 	var jsonStr = []byte(`{"name":"` + name + `", "password": "` + password + `"}`)
 	rec := httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/v1/user/connect", bytes.NewBuffer(jsonStr))
+	req, _ := http.NewRequest("POST", "/v1/user/login", bytes.NewBuffer(jsonStr))
 	req.Header.Add("Content-Type", "application/json")
 	router.ServeHTTP(rec, req)
 	assert.Equal(t, 200, rec.Code)
@@ -61,5 +61,5 @@ func ConnectUser(name string, password string, t *testing.T, router *gin.Engine)
 		t.Fail()
 	}
 
-	return user
+	return user.Token
 }

@@ -30,7 +30,7 @@ type UserPublic struct {
 //UserCreate object
 type UserCreate struct {
 	ID    int    `json:"id" binding:"required"`
-	Token string `json:"token" binfing:"required"`
+	Token string `json:"token"`
 }
 
 //UserConnect object
