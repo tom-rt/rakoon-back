@@ -61,7 +61,6 @@ func Get(c *gin.Context) {
 		return
 	}
 
-	// Already checked in jwt verif ?
 	user, _ := models.GetUserPublic(ID)
 
 	c.JSON(200, user)
