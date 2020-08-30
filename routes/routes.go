@@ -30,7 +30,7 @@ func SetupRouter() *gin.Engine {
 	private.Use(middleware.JwtHandling)
 
 	private.GET("/user/:id", func(c *gin.Context) { user.Get(c) })
-	private.GET("/directory", func(c *gin.Context) { navigation.GetDirectory(c) })
+	private.GET("/list/directory", func(c *gin.Context) { navigation.GetDirectory(c) })
 	private.PUT("/user/:id", func(c *gin.Context) { user.Update(c) })
 	private.PUT("/user/:id/password", func(c *gin.Context) { user.UpdatePassword(c) })
 	private.PUT("/user/:id/logout", func(c *gin.Context) { user.LogOut(c) })
