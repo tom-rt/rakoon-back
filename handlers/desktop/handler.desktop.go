@@ -1,4 +1,4 @@
-package navigation
+package desktop
 
 import (
 	"fmt"
@@ -11,7 +11,8 @@ import (
 
 // GetDirectory returns a directory's content
 func GetDirectory(c *gin.Context) {
-	var path string = c.Query("path")
+	const basePath = "/home/thomas"
+	var path string = basePath + c.Query("path")
 	var fileInfos []os.FileInfo
 	var directories []string
 	var files []string
