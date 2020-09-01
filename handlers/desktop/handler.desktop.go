@@ -1,10 +1,10 @@
 package desktop
 
 import (
-	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
+	"rakoon/rakoon-back/models"
 
 	"github.com/gin-gonic/gin"
 )
@@ -34,10 +34,9 @@ func GetDirectory(c *gin.Context) {
 			files = append(files, fileInfo.Name())
 		}
 	}
-	fmt.Println("##### DIRECTORIES ######")
-	fmt.Println(directories)
-	fmt.Println("##### FILES ######")
-	fmt.Println(files)
-	fmt.Println("###########")
+	var directory = new(models.Directory)
+	directory.Directories = directories
+	directory.Files = files
+	c.JSON(200, directory)
 	return
 }
