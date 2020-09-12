@@ -13,7 +13,7 @@ import (
 
 // GetDirectory returns a directory's content
 func GetDirectory(c *gin.Context) {
-	const basePath = "/home/thomas"
+	const basePath = "/Users/thomasraout/Downloads"
 	var path string = basePath + c.Query("path")
 	var fileInfos []os.FileInfo
 	var directory []models.FileDescriptor
@@ -37,6 +37,8 @@ func GetDirectory(c *gin.Context) {
 		}
 
 		fileDescriptor.Name = name
+		var trimmedName = trimName(name)
+		fileDescriptor.TrimmedName = trimmedName
 		if fileInfo.IsDir() {
 			fileDescriptor.Type = "directory"
 		} else {
@@ -55,4 +57,12 @@ func GetDirectory(c *gin.Context) {
 	// directory.Files = files
 	c.JSON(200, directory)
 	return
+}
+
+func trimName(name string) string {
+	if len(name) > 13 {
+		return name[0:12] + "..."
+	} else {
+		return name
+	}
 }
