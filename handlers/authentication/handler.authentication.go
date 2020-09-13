@@ -182,7 +182,7 @@ func VerifyToken(encHeader string, encPayload string, encSignature string) (isVa
 	if reauth {
 		return false, "Please reconnect", 401, -1
 	} else if err != nil {
-		return false, "User id in token payload does not exist.", 404, -1
+		return false, "User id in token payload does not exist.", 403, -1
 	}
 
 	checkSignature := GenerateSignature(encHeader, encPayload)
