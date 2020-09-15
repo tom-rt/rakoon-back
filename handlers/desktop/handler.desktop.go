@@ -13,8 +13,8 @@ import (
 
 // GetDirectory returns a directory's content
 func GetDirectory(c *gin.Context) {
-	const basePath = "/Users/thomasraout/Downloads"
-	var path string = basePath + c.Query("path")
+	var rootPath = os.Getenv("ROOT_PATH")
+	var path string = rootPath + c.Query("path")
 	var fileInfos []os.FileInfo
 	var directory []models.FileDescriptor
 	if len(path) <= 0 {
@@ -53,8 +53,6 @@ func GetDirectory(c *gin.Context) {
 		}
 		directory = append(directory, fileDescriptor)
 	}
-	// directory.Directories = directories
-	// directory.Files = files
 	c.JSON(200, directory)
 	return
 }
