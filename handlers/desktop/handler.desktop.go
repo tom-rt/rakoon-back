@@ -1,8 +1,10 @@
 package desktop
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 	"rakoon/rakoon-back/models"
@@ -10,6 +12,46 @@ import (
 
 	"github.com/gin-gonic/gin"
 )
+
+type File struct {
+	Name string `uri:"name" binding:"required"`
+}
+
+// ServeFile returns a directory's content
+func ServeFile(c *gin.Context) {
+	fmt.Println("SERVE")
+	// c.File("/home/thomas/programming/perso/rakoon-back/main.go")
+	const path = "/home/thomas/programming/perso/rakoon-back/main.go"
+
+	var f File
+	err := c.ShouldBindUri(&f)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err})
+		return
+	} else {
+		fmt.Println(err)
+	}
+	fmt.Println("ICI")
+
+	// %%%%%%%%%%
+	// dst := fmt.Sprintf("%s/%s", base, f.Name)
+	b, err := ioutil.ReadFile(path)
+	if err != nil {
+		fmt.Println(err)
+	}
+	m := http.DetectContentType(b[:512])
+
+	// %%%%%%%%%%
+
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err})
+		return
+	}
+	c.Header("Content-Disposition", "attachment; filename="+f.Name)
+	fmt.Println("ICI", m, b)
+	c.Data(http.StatusOK, m, b)
+
+}
 
 // GetDirectory returns a directory's content
 func GetDirectory(c *gin.Context) {
