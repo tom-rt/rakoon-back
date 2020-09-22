@@ -33,7 +33,7 @@ func SetupRouter() *gin.Engine {
 	private.GET("/list/directory", func(c *gin.Context) { desktop.GetDirectory(c) })
 
 	// private.GET("/local/file", func(c *gin.Context) { c.File("local/file.go") })
-	private.GET("/filez", func(c *gin.Context) { desktop.ServeFile(c) })
+	private.GET("/file", func(c *gin.Context) { desktop.ServeFile(c) })
 
 	// var fs http.FileSystem = // ...
 	// router.GET("/fs/file", func(c *gin.Context) {
