@@ -2,6 +2,8 @@
 
 ## TODO
 
+Check errs sql
+Routes get, passer un id meme si on regarde dans le token ?
 Dockerfile
 
 Forgotten password feature

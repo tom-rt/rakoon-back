@@ -59,7 +59,7 @@ type UserPassword struct {
 func GetUserByName(name string) (User, error) {
 	var user User
 	err := db.DB.Get(&user,
-		"SELECT id, name, password, salt, reauth, created_on, last_login FROM users where name = $1",
+		"SELECT id, name, password, salt, reauth, created_on, last_login, is_admin FROM users where name = $1",
 		name)
 	return user, err
 }
@@ -72,11 +72,19 @@ func IsAdmin(ID int) (bool, error) {
 	return user.IsAdmin, err
 }
 
+// GetList func model
+func GetList() ([]User, error) {
+	// var users []User
+	users := []User{}
+	err := db.DB.Select(users, "SELECT * FROM users")
+	return users, err
+}
+
 // GetUserByID func model
 func GetUserByID(ID int) (User, error) {
 	var user User
 	err := db.DB.Get(&user,
-		"SELECT id, name, password, salt, reauth, created_on, last_login FROM users where id = $1",
+		"SELECT id, name, password, salt, reauth, created_on, last_login, is_admin FROM users where id = $1",
 		ID)
 	return user, err
 }

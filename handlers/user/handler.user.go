@@ -52,6 +52,14 @@ func Create(c *gin.Context) {
 	return
 }
 
+// List all app users
+func List(c *gin.Context) {
+	userList, _ := models.GetList()
+	// fmt.Println(userList)
+	c.JSON(200, userList)
+	return
+}
+
 // Get user controller function
 func Get(c *gin.Context) {
 	var ID = c.Param("id")
@@ -203,10 +211,11 @@ func Connect(c *gin.Context) {
 	models.RefreshUserConnection(user.Name, false)
 
 	// Generate and return a token
-	jwtToken := authentication.GenerateToken(user.ID)
+	jwtToken := authentication.GenerateToken(user.ID, user.IsAdmin)
 	c.JSON(200, gin.H{
-		"token":  jwtToken,
-		"userId": user.ID,
+		"token":   jwtToken,
+		"userId":  user.ID,
+		"isAdmin": user.IsAdmin,
 	})
 	return
 }
