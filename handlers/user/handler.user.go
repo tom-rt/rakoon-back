@@ -55,7 +55,6 @@ func Create(c *gin.Context) {
 // List all app users
 func List(c *gin.Context) {
 	userList, _ := models.GetList()
-	// fmt.Println(userList)
 	c.JSON(200, userList)
 	return
 }

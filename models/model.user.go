@@ -1,21 +1,23 @@
 package models
 
 import (
+	"database/sql"
 	"rakoon/rakoon-back/db"
 	"time"
 )
 
 // User object
 type User struct {
-	ID         int       `db:"id" json:"id"`
-	Name       string    `db:"name" json:"name" binding:"required"`
-	Password   string    `db:"password" json:"password" binding:"required"`
-	Salt       string    `db:"salt" json:"salt"`
-	Reauth     bool      `db:"reauth" json:"reauth"`
-	CreatedOn  time.Time `db:"created_on" json:"created_on"`
-	LastLogin  time.Time `db:"last_login" json:"last_login"`
-	ArchivedOn time.Time `db:"archived_on" json:"archived_on"`
-	IsAdmin    bool      `db:"is_admin" json:"is_admin"`
+	ID         int          `db:"id" json:"id"`
+	Name       string       `db:"name" json:"name" binding:"required"`
+	Password   string       `db:"password" json:"password" binding:"required"`
+	Salt       string       `db:"salt" json:"salt"`
+	Reauth     bool         `db:"reauth" json:"reauth"`
+	CreatedOn  time.Time    `db:"created_on" json:"created_on"`
+	LastLogin  time.Time    `db:"last_login" json:"last_login"`
+	ArchivedOn sql.NullTime `db:"archived_on" json:"archived_on"`
+	// ArchivedOn time.Time `db:"archived_on" json:"archived_on"`
+	IsAdmin bool `db:"is_admin" json:"is_admin"`
 }
 
 // UserPublic object
@@ -74,9 +76,8 @@ func IsAdmin(ID int) (bool, error) {
 
 // GetList func model
 func GetList() ([]User, error) {
-	// var users []User
 	users := []User{}
-	err := db.DB.Select(users, "SELECT * FROM users")
+	err := db.DB.Select(&users, "SELECT * FROM users")
 	return users, err
 }
 
