@@ -108,15 +108,17 @@ func RefreshToken(c *gin.Context) {
 		return
 	}
 
-	newToken := GenerateToken(payload.ID)
+	newToken := GenerateToken(payload.ID, payload.IsAdmin)
 	c.JSON(200, gin.H{
-		"token": newToken,
+		"userId":  payload.ID,
+		"token":   newToken,
+		"isAdmin": payload.IsAdmin,
 	})
 	return
 }
 
 // GenerateToken function
-func GenerateToken(id int) string {
+func GenerateToken(id int, isAdmin bool) string {
 	var header *models.JwtHeader
 	var payload *models.JwtPayload
 	const alg = "HS256"
@@ -141,7 +143,7 @@ func GenerateToken(id int) string {
 	// Building and encrypting payload
 	payload = new(models.JwtPayload)
 	payload.ID = id
-	payload.IsAdmin = isAdmin(payload.ID)
+	payload.IsAdmin = isAdmin
 	now := nowAsUnixMilli()
 	payload.Iat = now
 	payload.Exp = now + minutesToMilliseconds(validityLimit)
@@ -166,37 +168,37 @@ func GenerateSignature(encHeader string, encPayload string) string {
 }
 
 // VerifyToken controller: This function checks if the user has to reconnect and if the token is valid. It is only used in the middleware
-func VerifyToken(encHeader string, encPayload string, encSignature string) (isValid bool, message string, status int, id int) {
+func VerifyToken(encHeader string, encPayload string, encSignature string) (isValid bool, message string, status int, id int, isAdmin bool) {
 	// Decode payload
 	decPayloadByte, err := base64.RawURLEncoding.DecodeString(encPayload)
 	decPayload := string(decPayloadByte)
 	payload := new(models.JwtPayload)
 	err = json.Unmarshal([]byte(decPayload), payload)
 	if err != nil {
-		return false, "Bad token", 403, -1
+		return false, "Bad token", 403, -1, false
 	}
 
 	// Check if the user has to reconnect
 	var reauth bool
 	reauth, err = GetReauth(payload.ID)
 	if reauth {
-		return false, "Please reconnect", 401, -1
+		return false, "Please reconnect", 401, -1, false
 	} else if err != nil {
-		return false, "User id in token payload does not exist.", 403, -1
+		return false, "User id in token payload does not exist.", 403, -1, false
 	}
 
 	checkSignature := GenerateSignature(encHeader, encPayload)
 	if encSignature != checkSignature {
-		return false, "Bad signature", 403, -1
+		return false, "Bad signature", 403, -1, false
 	}
 
 	// Check token validity date
 	now := nowAsUnixMilli()
 	if now >= payload.Exp {
-		return false, "Token expired.", 401, -1
+		return false, "Token expired.", 401, -1, false
 	}
 
-	return true, "Token valid", 200, payload.ID
+	return true, "Token valid", 200, payload.ID, payload.IsAdmin
 }
 
 // UserNameExists function
