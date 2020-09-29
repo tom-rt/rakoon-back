@@ -61,7 +61,16 @@ type UserPassword struct {
 func GetUserByName(name string) (User, error) {
 	var user User
 	err := db.DB.Get(&user,
-		"SELECT id, name, password, salt, reauth, created_on, last_login, is_admin FROM users where name = $1",
+		`SELECT	id,
+					name,
+					password,
+					salt,
+					reauth,
+					created_on::timestamp with time zone,
+					last_login::timestamp with time zone,
+					is_admin
+		FROM users
+		WHERE name = $1 AND archived_on IS NULL`,
 		name)
 	return user, err
 }
@@ -78,13 +87,13 @@ func IsAdmin(ID int) (bool, error) {
 func GetList() ([]User, error) {
 	users := []User{}
 	err := db.DB.Select(&users,
-		`SELECT id,
-				name,
-				reauth,
-				is_admin,
-				created_on::timestamp with time zone,
-				last_login::timestamp with time zone,
-				archived_on::timestamp with time zone
+		`SELECT	id,
+					name,
+					reauth,
+					is_admin,
+					created_on::timestamp with time zone,
+					last_login::timestamp with time zone,
+					archived_on::timestamp with time zone
 		FROM users ORDER BY id ASC`,
 	)
 	return users, err
@@ -94,7 +103,15 @@ func GetList() ([]User, error) {
 func GetUserByID(ID int) (User, error) {
 	var user User
 	err := db.DB.Get(&user,
-		"SELECT id, name, password, salt, reauth, created_on, last_login, is_admin FROM users where id = $1",
+		`SELECT	id,
+					name,
+					password,
+					salt,
+					reauth,
+					created_on::timestamp with time zone,
+					last_login::timestamp with time zone,
+					is_admin
+		FROM users WHERE id = $1`,
 		ID)
 	return user, err
 }
@@ -103,7 +120,12 @@ func GetUserByID(ID int) (User, error) {
 func GetUserPublic(ID string) (UserPublic, error) {
 	var user UserPublic
 	err := db.DB.Get(&user,
-		"SELECT id, name, reauth, created_on, last_login FROM users where id = $1",
+		`SELECT	id,
+					name,
+					reauth,
+					created_on::timestamp with time zone,
+					last_login::timestamp with time zone
+		FROM users where id = $1`,
 		ID)
 	return user, err
 }

@@ -20,7 +20,6 @@ func SetupRouter() *gin.Engine {
 
 	// Public routes
 	public := router.Group("/v1")
-	public.POST("/user", func(c *gin.Context) { user.Create(c) })
 	public.POST("/user/login", func(c *gin.Context) { user.Connect(c) })
 	public.POST("/refresh/token", func(c *gin.Context) { authentication.RefreshToken(c) })
 
@@ -31,15 +30,16 @@ func SetupRouter() *gin.Engine {
 	private.GET("/list/directory", func(c *gin.Context) { desktop.GetDirectory(c) })
 	private.GET("/file", func(c *gin.Context) { desktop.ServeFile(c) })
 	private.PUT("/user/:id", func(c *gin.Context) { user.Update(c) })
-	private.PUT("/user/:id/password", func(c *gin.Context) { user.UpdatePassword(c) })
 	private.PUT("/user/:id/logout", func(c *gin.Context) { user.LogOut(c) })
-	private.PUT("/user/:id/archive", func(c *gin.Context) { user.Archive(c) })
-	private.DELETE("/user/:id", func(c *gin.Context) { user.Delete(c) })
 
 	// Admin routes
 	admin := router.Group("/v1")
 	admin.Use(middleware.AdminJwtHandling)
 	admin.GET("/list/users", func(c *gin.Context) { user.List(c) })
+	admin.PUT("/user/:id/archive", func(c *gin.Context) { user.Archive(c) })
+	admin.DELETE("/user/:id", func(c *gin.Context) { user.Delete(c) })
+	admin.PUT("/user/:id/password", func(c *gin.Context) { user.UpdatePassword(c) })
+	admin.POST("/user", func(c *gin.Context) { user.Create(c) })
 
 	return router
 }

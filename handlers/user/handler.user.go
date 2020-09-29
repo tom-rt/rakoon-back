@@ -113,17 +113,16 @@ func UpdatePassword(c *gin.Context) {
 	var user models.UserPassword
 	var err = c.BindJSON(&user)
 
-	var tokenID = fmt.Sprintf("%v", c.MustGet("id"))
-
 	if err != nil {
 		c.JSON(400, gin.H{"Incorrect input data": err.Error()})
 		return
 	}
 	user.ID = c.Param("id")
 
-	if !matchIDs(c, user.ID, tokenID) {
-		return
-	}
+	// var tokenID = fmt.Sprintf("%v", c.MustGet("id"))
+	// if !matchIDs(c, user.ID, tokenID) {
+	// 	return
+	// }
 
 	// Salt password
 	salt := authentication.GenerateSalt(10)
@@ -145,11 +144,6 @@ func UpdatePassword(c *gin.Context) {
 // Archive a user (soft delete)
 func Archive(c *gin.Context) {
 	var ID = c.Param("id")
-	var tokenID = fmt.Sprintf("%v", c.MustGet("id"))
-
-	if !matchIDs(c, ID, tokenID) {
-		return
-	}
 
 	models.ArchiveUser(ID)
 
@@ -163,11 +157,11 @@ func Archive(c *gin.Context) {
 // Delete user controller function
 func Delete(c *gin.Context) {
 	var ID = c.Param("id")
-	var tokenID = fmt.Sprintf("%v", c.MustGet("id"))
 
-	if !matchIDs(c, ID, tokenID) {
-		return
-	}
+	// var tokenID = fmt.Sprintf("%v", c.MustGet("id"))
+	// if !matchIDs(c, ID, tokenID) {
+	// 	return
+	// }
 
 	models.DeleteUser(ID)
 
