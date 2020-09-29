@@ -77,7 +77,16 @@ func IsAdmin(ID int) (bool, error) {
 // GetList func model
 func GetList() ([]User, error) {
 	users := []User{}
-	err := db.DB.Select(&users, "SELECT * FROM users")
+	err := db.DB.Select(&users,
+		`SELECT id,
+				name,
+				reauth,
+				is_admin,
+				created_on::timestamp with time zone,
+				last_login::timestamp with time zone,
+				archived_on::timestamp with time zone
+		FROM users ORDER BY id ASC`,
+	)
 	return users, err
 }
 
