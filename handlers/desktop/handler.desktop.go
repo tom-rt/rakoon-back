@@ -81,8 +81,8 @@ func GetDirectory(c *gin.Context) {
 }
 
 func trimName(name string) string {
-	if len(name) > 13 {
-		return name[0:12] + "..."
+	if len(name) > 15 {
+		return name[0:13] + "..."
 	}
 	return name
 }
