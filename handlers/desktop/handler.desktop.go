@@ -13,11 +13,36 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// CreateFolder returns a directory's content
+func CreateFolder(c *gin.Context) {
+	var rootPath = os.Getenv("ROOT_PATH")
+	var folder models.Folder
+	err := c.BindJSON(&folder)
+
+	// Check formatting
+	if err != nil {
+		c.JSON(400, gin.H{"Incorrect input data": err.Error()})
+		return
+	}
+
+	var path string = rootPath + folder.Path
+	var folderPath string = path[strings.LastIndex(folder.Name, "/")+1:]
+
+	err = os.Mkdir(folderPath, 0755)
+	if err != nil {
+		c.JSON(500, gin.H{"Could not create file": err.Error()})
+		return
+	}
+
+	c.JSON(201, folder.Name)
+	return
+}
+
 // ServeFile returns a directory's content
 func ServeFile(c *gin.Context) {
 	var rootPath = os.Getenv("ROOT_PATH")
 	var path string = rootPath + c.Query("path")
-	var fileName = path[strings.LastIndex(path, "/")+1:]
+	var fileName string = path[strings.LastIndex(path, "/")+1:]
 
 	b, err := ioutil.ReadFile(path)
 	if err != nil {

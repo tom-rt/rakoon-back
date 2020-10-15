@@ -29,6 +29,7 @@ func SetupRouter() *gin.Engine {
 	private.GET("/user/:id", func(c *gin.Context) { user.Get(c) })
 	private.GET("/list/directory", func(c *gin.Context) { desktop.GetDirectory(c) })
 	private.GET("/file", func(c *gin.Context) { desktop.ServeFile(c) })
+	private.POST("/folder", func(c *gin.Context) { desktop.CreateFolder(c) })
 	private.PUT("/user/:id", func(c *gin.Context) { user.Update(c) })
 	private.PUT("/user/:id/logout", func(c *gin.Context) { user.LogOut(c) })
 
