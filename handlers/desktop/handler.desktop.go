@@ -13,6 +13,57 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// DeletePath deletes at a given path
+func DeletePath(c *gin.Context) {
+	var rootPath = os.Getenv("ROOT_PATH")
+	var pathDelete models.PathDelete
+
+	err := c.BindJSON(&pathDelete)
+
+	// Check formatting
+	if err != nil {
+		c.JSON(400, gin.H{"Incorrect input data": err.Error()})
+		return
+	}
+
+	var path string = rootPath + pathDelete.Path
+
+	err = os.RemoveAll(path)
+	if err != nil {
+		c.JSON(500, gin.H{"Could not remove": err.Error()})
+		return
+	}
+
+	c.JSON(200, pathDelete.Path)
+	return
+}
+
+// RenamePath renames a file or a directory
+func RenamePath(c *gin.Context) {
+	var rootPath = os.Getenv("ROOT_PATH")
+	var fileRename models.PathRename
+	err := c.BindJSON(&fileRename)
+
+	// Check formatting
+	if err != nil {
+		c.JSON(400, gin.H{"Incorrect input data": err.Error()})
+		return
+	}
+
+	var name string = fileRename.Name
+	var originalPath string = rootPath + fileRename.OriginalPath
+	var newPath string = rootPath + fileRename.NewPath
+
+	err = os.Rename(originalPath, newPath)
+	if err != nil {
+		c.JSON(500, gin.H{"Could not rename file": err.Error()})
+		return
+	}
+
+	c.JSON(201, name)
+	return
+}
+
 // CreateFolder returns a directory's content
 func CreateFolder(c *gin.Context) {
 	var rootPath = os.Getenv("ROOT_PATH")

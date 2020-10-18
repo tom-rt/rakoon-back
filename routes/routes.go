@@ -32,6 +32,8 @@ func SetupRouter() *gin.Engine {
 	private.POST("/folder", func(c *gin.Context) { desktop.CreateFolder(c) })
 	private.PUT("/user/:id", func(c *gin.Context) { user.Update(c) })
 	private.PUT("/user/:id/logout", func(c *gin.Context) { user.LogOut(c) })
+	private.PUT("/path", func(c *gin.Context) { desktop.RenamePath(c) })
+	private.PUT("/delete/path", func(c *gin.Context) { desktop.DeletePath(c) })
 
 	// Admin routes
 	admin := router.Group("/v1")

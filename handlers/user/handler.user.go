@@ -158,11 +158,6 @@ func Archive(c *gin.Context) {
 func Delete(c *gin.Context) {
 	var ID = c.Param("id")
 
-	// var tokenID = fmt.Sprintf("%v", c.MustGet("id"))
-	// if !matchIDs(c, ID, tokenID) {
-	// 	return
-	// }
-
 	models.DeleteUser(ID)
 
 	c.JSON(200, gin.H{
