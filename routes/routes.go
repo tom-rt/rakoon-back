@@ -30,6 +30,7 @@ func SetupRouter() *gin.Engine {
 	private.GET("/list/directory", func(c *gin.Context) { desktop.GetDirectory(c) })
 	private.GET("/file", func(c *gin.Context) { desktop.ServeFile(c) })
 	private.POST("/folder", func(c *gin.Context) { desktop.CreateFolder(c) })
+	private.POST("/file", func(c *gin.Context) { desktop.UploadFile(c) })
 	private.PUT("/user/:id", func(c *gin.Context) { user.Update(c) })
 	private.PUT("/user/:id/logout", func(c *gin.Context) { user.LogOut(c) })
 	private.PUT("/path", func(c *gin.Context) { desktop.RenamePath(c) })
