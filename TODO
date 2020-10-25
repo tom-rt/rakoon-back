@@ -2,6 +2,7 @@
 
 ## TODO
 
+Check params in routes.go and pass useful data directly to controller
 Check errs sql
 Routes get, passer un id meme si on regarde dans le token ?
 Dockerfile
