@@ -3,6 +3,7 @@ package routes
 import (
 	"rakoon/rakoon-back/handlers/authentication"
 	"rakoon/rakoon-back/handlers/desktop"
+	"rakoon/rakoon-back/handlers/torrent"
 	"rakoon/rakoon-back/handlers/user"
 	"rakoon/rakoon-back/middleware"
 
@@ -31,6 +32,7 @@ func SetupRouter() *gin.Engine {
 	private.GET("/file", func(c *gin.Context) { desktop.ServeFile(c) })
 	private.POST("/folder", func(c *gin.Context) { desktop.CreateFolder(c) })
 	private.POST("/file", func(c *gin.Context) { desktop.UploadFile(c) })
+	private.POST("/torrent", func(c *gin.Context) { torrent.Download(c) })
 	private.PUT("/user/:id", func(c *gin.Context) { user.Update(c) })
 	private.PUT("/user/:id/logout", func(c *gin.Context) { user.LogOut(c) })
 	private.PUT("/path", func(c *gin.Context) { desktop.RenamePath(c) })
