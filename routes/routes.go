@@ -36,6 +36,7 @@ func SetupRouter() *gin.Engine {
 	private.PUT("/user/:id", func(c *gin.Context) { user.Update(c) })
 	private.PUT("/user/:id/logout", func(c *gin.Context) { user.LogOut(c) })
 	private.PUT("/path", func(c *gin.Context) { desktop.RenamePath(c) })
+	private.PUT("/copy/path", func(c *gin.Context) { desktop.CopyPath(c) })
 	private.PUT("/delete/path", func(c *gin.Context) { desktop.DeletePath(c) })
 
 	// Admin routes
