@@ -103,7 +103,8 @@ func CopyPath(c *gin.Context) {
 // UploadFile uploads a file
 func UploadFile(c *gin.Context) {
 	var rootPath = os.Getenv("ROOT_PATH")
-	var path string = rootPath + c.PostFormArray("path")[0]
+	var pathParam string = c.PostFormArray("path")[0]
+	var path string = rootPath + pathParam
 
 	file, err := c.FormFile("file")
 	src, err := file.Open()
@@ -122,7 +123,7 @@ func UploadFile(c *gin.Context) {
 	defer out.Close()
 
 	_, err = io.Copy(out, src)
-	c.JSON(201, "File(s) uploaded.")
+	c.JSON(201, gin.H{"file": file.Filename, "path": pathParam})
 	return
 }
 
@@ -151,7 +152,7 @@ func CreateFolder(c *gin.Context) {
 	return
 }
 
-// ServeFile returns a directory's content
+// ServeFile returns a fil to download
 func ServeFile(c *gin.Context) {
 	var rootPath = os.Getenv("ROOT_PATH")
 	var path string = rootPath + c.Query("path")
