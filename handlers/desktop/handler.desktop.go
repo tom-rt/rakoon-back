@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"rakoon/rakoon-back/models"
 	"strings"
@@ -29,9 +30,11 @@ func DeletePath(c *gin.Context) {
 
 	var path string = rootPath + pathDelete.Path
 
-	err = os.RemoveAll(path)
+	cmd := exec.Command("rm", "-rf", path)
+	_, err = cmd.Output()
+
 	if err != nil {
-		c.JSON(500, gin.H{"Could not remove": err.Error()})
+		c.JSON(400, gin.H{"Error during remove": err.Error()})
 		return
 	}
 
@@ -65,10 +68,43 @@ func RenamePath(c *gin.Context) {
 	return
 }
 
+// CopyPath copies a file or a directory
+func CopyPath(c *gin.Context) {
+	var rootPath = os.Getenv("ROOT_PATH")
+	var copyPath models.CopyPath
+	err := c.BindJSON(&copyPath)
+
+	// Check formatting
+	if err != nil {
+		c.JSON(400, gin.H{"Incorrect input data": err.Error()})
+		return
+	}
+
+	var source string = rootPath + copyPath.SourcePath
+	var target string = rootPath + copyPath.TargetPath
+
+	if source == target+"/"+copyPath.SourceName {
+		c.JSON(201, "Copied")
+		return
+	}
+
+	cmd := exec.Command("cp", "-rf", source, target)
+	_, err = cmd.Output()
+
+	if err != nil {
+		c.JSON(400, gin.H{"Error during copy": err.Error()})
+		return
+	}
+
+	c.JSON(201, "Copied")
+	return
+}
+
 // UploadFile uploads a file
 func UploadFile(c *gin.Context) {
 	var rootPath = os.Getenv("ROOT_PATH")
-	var path string = rootPath + c.PostFormArray("path")[0]
+	var pathParam string = c.PostFormArray("path")[0]
+	var path string = rootPath + pathParam
 
 	file, err := c.FormFile("file")
 	src, err := file.Open()
@@ -87,7 +123,7 @@ func UploadFile(c *gin.Context) {
 	defer out.Close()
 
 	_, err = io.Copy(out, src)
-	c.JSON(201, "File(s) uploaded.")
+	c.JSON(201, gin.H{"file": file.Filename, "path": pathParam})
 	return
 }
 
@@ -116,7 +152,7 @@ func CreateFolder(c *gin.Context) {
 	return
 }
 
-// ServeFile returns a directory's content
+// ServeFile returns a fil to download
 func ServeFile(c *gin.Context) {
 	var rootPath = os.Getenv("ROOT_PATH")
 	var path string = rootPath + c.Query("path")
@@ -172,8 +208,14 @@ func GetDirectory(c *gin.Context) {
 			var extension = strings.ToLower(filepath.Ext(name))
 			if extension == ".png" || extension == ".jpg" || extension == ".svg" {
 				fileDescriptor.Type = "image"
-			} else if extension == "mp4" {
+			} else if extension == ".mp4" || extension == ".mkv" {
 				fileDescriptor.Type = "video"
+			} else if extension == ".torrent" {
+				fileDescriptor.Type = "torrent"
+			} else if extension == ".pdf" {
+				fileDescriptor.Type = "pdf"
+			} else if extension == ".zip" {
+				fileDescriptor.Type = "archive"
 			} else {
 				fileDescriptor.Type = "file"
 			}
