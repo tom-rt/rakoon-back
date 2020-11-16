@@ -120,7 +120,7 @@ func CreateFolder(c *gin.Context) {
 func ServeFile(c *gin.Context) {
 	var rootPath = os.Getenv("ROOT_PATH")
 	var path string = rootPath + c.Query("path")
-	var fileName string = path[strings.LastIndex(path, "/")+1:]
+	// var fileName string = path[strings.LastIndex(path, "/")+1:]
 
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -133,7 +133,8 @@ func ServeFile(c *gin.Context) {
 		return
 	}
 
-	c.Header("Content-Disposition", "attachment; filename="+fileName)
+	// c.Header("Content-Disposition", "attachment; filename="+fileName)
+	c.Header("Content-Disposition", "attachment;")
 	c.Data(http.StatusOK, m, b)
 }
 
