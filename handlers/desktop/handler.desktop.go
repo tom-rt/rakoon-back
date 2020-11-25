@@ -179,8 +179,8 @@ func ServeFile(c *gin.Context) {
 		return
 	}
 
-	c.Header("Content-Disposition", "attachment; filename="+fileName)
 	c.Header("Content-Length", strconv.Itoa(int(size)))
+	c.Header("Content-Disposition", "attachment; filename="+fileName)
 	c.Data(http.StatusOK, m, b)
 }
 
