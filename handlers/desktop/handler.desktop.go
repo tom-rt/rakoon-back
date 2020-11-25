@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"rakoon/rakoon-back/models"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -179,7 +180,7 @@ func ServeFile(c *gin.Context) {
 	}
 
 	c.Header("Content-Disposition", "attachment; filename="+fileName)
-	c.Header("Content-Length", string(size))
+	c.Header("Content-Length", strconv.Itoa(int(size)))
 	c.Data(http.StatusOK, m, b)
 }
 
