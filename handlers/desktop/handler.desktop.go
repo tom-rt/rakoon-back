@@ -158,6 +158,15 @@ func ServeFile(c *gin.Context) {
 	var path string = rootPath + c.Query("path")
 	var fileName string = path[strings.LastIndex(path, "/")+1:]
 
+	fileInfo, err := os.Stat(path)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err})
+		return
+	}
+	// get the size
+	size := fileInfo.Size()
+	fmt.Println(size)
+
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
 		fmt.Println(err)
@@ -170,6 +179,7 @@ func ServeFile(c *gin.Context) {
 	}
 
 	c.Header("Content-Disposition", "attachment; filename="+fileName)
+	c.Header("Content-Length", string(size))
 	c.Data(http.StatusOK, m, b)
 }
 
