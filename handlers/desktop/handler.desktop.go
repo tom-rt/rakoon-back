@@ -166,7 +166,6 @@ func ServeFile(c *gin.Context) {
 	}
 	// get the size
 	size := fileInfo.Size()
-	fmt.Println(size)
 
 	b, err := ioutil.ReadFile(path)
 	if err != nil {

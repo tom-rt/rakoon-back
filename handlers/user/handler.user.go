@@ -179,7 +179,6 @@ func Connect(c *gin.Context) {
 	// Fetch the user in db
 	var user models.User
 	user, err = models.GetUserByName(connection.Name)
-	fmt.Println(connection.Name)
 	if err != nil {
 		c.JSON(404, gin.H{
 			"message": "ici Incorrect user name or password.",
