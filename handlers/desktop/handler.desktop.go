@@ -187,7 +187,7 @@ func GetDirectory(c *gin.Context) {
 	}
 	fileInfos, err := ioutil.ReadDir(path)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Read dir:", err)
 	}
 
 	var fileDescriptor models.FileDescriptor
