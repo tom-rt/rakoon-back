@@ -10,7 +10,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"rakoon/rakoon-back/models"
-	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -159,13 +158,13 @@ func ServeFile(c *gin.Context) {
 	var path string = rootPath + c.Query("path")
 	var fileName string = path[strings.LastIndex(path, "/")+1:]
 
-	fileInfo, err := os.Stat(path)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err})
-		return
-	}
+	// fileInfo, err := os.Stat(path)
+	// if err != nil {
+	// 	c.JSON(http.StatusNotFound, gin.H{"error": err})
+	// 	return
+	// }
 	// get the size
-	size := fileInfo.Size()
+	//size := fileInfo.Size()
 
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -178,7 +177,8 @@ func ServeFile(c *gin.Context) {
 		return
 	}
 
-	c.Header("Content-Length", strconv.Itoa(int(size)))
+	// c.Header("Content-Length", strconv.Itoa(int(size)))
+	// 2020/12/08 18:30:56 http: panic serving 127.0.0.1:45860: http: wrote more than the declared Content-Length
 	c.Header("Content-Disposition", "attachment; filename="+fileName)
 	c.Data(http.StatusOK, m, b)
 }
