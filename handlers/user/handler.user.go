@@ -181,7 +181,7 @@ func Connect(c *gin.Context) {
 	user, err = models.GetUserByName(connection.Name)
 	if err != nil {
 		c.JSON(404, gin.H{
-			"message": "Incorrect user name or password.",
+			"message": "ici Incorrect user name or password.",
 		})
 		return
 	}
@@ -190,7 +190,7 @@ func Connect(c *gin.Context) {
 	check := authentication.CheckPasswordHash(connection.Password+user.Salt, user.Password)
 	if check == false {
 		c.JSON(404, gin.H{
-			"message": "Incorrect user name or password.",
+			"message": "la Incorrect user name or password.",
 		})
 		return
 	}
