@@ -179,8 +179,9 @@ func ServeFile(c *gin.Context) {
 
 	// c.Header("Content-Length", strconv.Itoa(int(size)))
 	// 2020/12/08 18:30:56 http: panic serving 127.0.0.1:45860: http: wrote more than the declared Content-Length
+	fmt.Println("m:", m)
 	c.Header("Content-Disposition", "attachment; filename="+fileName)
-	c.Data(http.StatusOK, m, b)
+	c.Data(http.StatusOK, "application/octet-stream", b)
 }
 
 // GetDirectory returns a directory's content
