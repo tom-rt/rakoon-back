@@ -1,21 +1,29 @@
-# User service seed
+# Rakoon back-end
 
-## Description
+  Rakoon est un bureau distant permettant de stocker et télécharrger des fichiers dans le cloud, sans limite de temps.
+  Une gestion d'utilisateurs avec différents droits est implémentée et paramétable depuis un panneau de configuration.
+  L'authentification se fait à l'aide de jsons web tokens.
+  Ce dépot contient l'app back-end, en go.
+  J'utilise gin-gonic et sqlx.
 
-This is a user handling service, fully written in Go.
+## Pré-requis
+  
+  Pour lancer l'application, il est nécessaire d'avoir:
+  
+  * Une base postgresql. (les script créeant les tables nécessaires se trouvent dans le dossier sql)
 
-The used database engine is postgresql.
-
-The libraries used are exclusively gin-gonic and SQLX.
-
-You can initialize the database model with the files located in the psql folder.
-
-## Auth
-
-It uses json web tokens. I don't use a lib, I implemented everything.
+  * Les variables d'environnement suivantes de définies:
+    `DB_PORT=5432`
+    `DB_HOST=localhost`
+    `DB_USER=tom`
+    `DB_NAME=rakoon_db`
+    `DB_PWD=qwerty`
+    `SECRET_KEY=secretkey`
+    
+    
 
 ## Testing
 
-It is end to end tested, you can lauch them with a local or distant database:
+  L'app est testée en end-to-end, on peut les lancer avec une base locale ou distante avec la commande suivante:
 
-source .env-test; go test ./tests
+  * source .env-test; go test ./tests
