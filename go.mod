@@ -12,6 +12,7 @@ require (
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/lib/pq v1.1.1
 	github.com/pelletier/go-toml v1.8.1 // indirect
+	github.com/tom-rt/goberge v1.0.0 // indirect
 	golang.org/x/crypto v0.0.0-20191205180655-e7c4368fe9dd
 	golang.org/x/sys v0.0.0-20201029080932-201ba4db2418 // indirect
 	google.golang.org/appengine v1.6.6 // indirect

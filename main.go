@@ -6,6 +6,8 @@ import (
 
 	"rakoon/rakoon-back/db"
 	"rakoon/rakoon-back/routes"
+
+	"github.com/tom-rt/goberge"
 )
 
 func main() {
@@ -15,6 +17,9 @@ func main() {
 		fmt.Println("ERROR: secret key is not defined.")
 		os.Exit(1)
 	}
+
+	// Test using an external lib
+	goberge.Goberge()
 
 	db.InitDB()
 	r := routes.SetupRouter()
